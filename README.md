@@ -2,8 +2,8 @@
 These scripts intend to provide a way to efficiently analyse high dimensional mass cytometry data.
 The essence of the project is to combine dimentionality reduction (using UMAP) and density-based clustering (using HDBSCAN). 
 The scripts provide:
-* cluster visualization on a 2D space
-* marker intensity on a 2D space
+* cluster visualization in a 2D space
+* marker intensity in a 2D space
 * clustering quality control
 * visualization of the clusters' sizes over time
 
