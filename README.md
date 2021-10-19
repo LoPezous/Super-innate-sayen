@@ -26,6 +26,9 @@ NOTE: Without reducing the dimensonality of the data before clustering, HDBSCAN 
 ## Control samples automated quality check
 * using QC.py
 
+![image](https://user-images.githubusercontent.com/66411147/137936127-a5d9b6b1-3eb1-4e73-b2f3-6e3e7e1ede7b.png)
+
+
 ## Outputs
 
 ### Cluster visualization
