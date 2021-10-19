@@ -62,6 +62,10 @@ Such outputs are generated for each cluster
 
 QC_list.txt 
 
+## NOTE
+
+control samples quality controls (***QC.py***) and clusters quality controls (inside ***Serial.py*** and ***Parallel.py***) are DIFFERENT. ***QC.py*** checks the validity of the markers while cluster quality control check the validity of the clustering
+
 
 
 
