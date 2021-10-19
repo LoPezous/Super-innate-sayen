@@ -1,4 +1,4 @@
-# innate-potato
+# Cytof deep phenotyping and exploration of trained immunity mechanisms
 These scripts intend to provide a way to efficiently analyse high dimensional mass cytometry data.
 The essence of the project is to combine dimentionality reduction (using UMAP) and density-based clustering (using HDBSCAN). 
 The scripts provide:
