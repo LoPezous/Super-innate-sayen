@@ -18,7 +18,7 @@ NOTE: reducing the dimensionality before clustering induces a loss of informatio
 
 ## Clustering on a high dimensional dataset and using dimensionality reduction for visualization purposes.
 NOTE: Without reducing the dimensonality of the data before clustering, HDBSCAN might not be able to detect fine overdensities, this is why this approach should be used on large datasets 
-* using ***parallel.py**
+* using ***parallel.py***
 
 ![image](https://user-images.githubusercontent.com/66411147/137888441-6d5ba92e-5604-4203-add8-e9fdeb71ed63.png)
 
