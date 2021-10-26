@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[2]:
+# In[3]:
 
 
-def UMAP_clusters(BL_1, BL_2, D28_1, D28_2, cells, neighbors, metric):
+def UMAP_clusters(directory, cells, neighbors, metric):
     
     import FlowCytometryTools
     import numpy as np
@@ -29,7 +29,10 @@ def UMAP_clusters(BL_1, BL_2, D28_1, D28_2, cells, neighbors, metric):
     import datetime
     import win32com.client as win32
     import shutil
-    
+    import sys
+    import re
+    import traceback2 as traceback
+    from more_itertools import one
     
     
    # Quality control tests used in QC section
@@ -54,7 +57,7 @@ def UMAP_clusters(BL_1, BL_2, D28_1, D28_2, cells, neighbors, metric):
         
         
     
-    cwd = os.getcwd()
+    cwd = sys.path[0]
     os.chdir(cwd)
     
     paths = ['Results', 'Results/metrics', 'Results/metrics/' + str(metric),
@@ -66,61 +69,126 @@ def UMAP_clusters(BL_1, BL_2, D28_1, D28_2, cells, neighbors, metric):
         if os.path.exists(path):                                      #DELETES EXISTING DIRS AND RECREATE THEM
             shutil.rmtree(path)
         os.makedirs(path)
+        
 
     #BASELINE
+    files = os.listdir('files')
     
-    sample_BL_1 = FCMeasurement(ID='Test Sample', datafile=BL_1)
-    sample_BL_2 = FCMeasurement(ID='Test Sample', datafile=BL_2)
-    sample_BL = sample_BL_1.data.append(sample_BL_2.data)
+    #ALL BASELINE FILES
     
-    # Resampling
+    baseline_files = []
+    for file in files:
+        if re.match('BL', file):
+            baseline_files.append(file)
+    
+    sample_BL = FCMeasurement(ID='Test Sample', datafile=r'files/'+ baseline_files[0])
+    sample_BL = sample_BL.data
+    baseline_files.pop(0)
+    for file in baseline_files:
+        sample = FCMeasurement(ID='Test Sample', datafile=r'files/'+ file)
+        sample = sample.data
+        sample_BL.append(sample)
+        del sample
+    
+        
+    # Resampling BASELINE
     
     indexes = random.sample(range(0, len(sample_BL)), cells)
     data_BL = sample_BL
+    del sample_BL
     data_BL = data_BL.iloc[indexes,]
     
-    #Cleaning  
+    #Cleaning BASELINE
     data_BL = data_BL.drop(['Time','Event_length','Center','Offset','Width',
                       'Residual','FileNum','Pd102Di','Rh103Di','Pd104Di',
                       'Pd105Di','Pd106Di','Pd108Di','Pd110Di','BCKG190Di',
                       'Ir191Di','Ir193Di','ArAr80Di','Xe131Di','Ce140Di',
                       'Pb208Di','I127Di','Ba138Di'], axis = 1)
-    data_BL['Timepoint'] = ['BL']*len(data_BL)
     
-    #D28
-    
-    sample_D28_1 = FCMeasurement(ID='Test Sample', datafile=D28_1)
-    sample_D28_2 = FCMeasurement(ID='Test Sample', datafile=D28_2)
-    sample_D28 = sample_D28_1.data.append(sample_D28_2.data)
+    data_BL['Timepoint'] = ['BL']*len(data_BL)            #ADD A TIMEPOINT COLUMN
     
     
-    # RESAMPLING
     
-    #indexes = np.random.random_integers(len(sample_D28.data), size = (1200000,))
-    indexes = random.sample(range(0, len(sample_D28)), cells)
-    data_D28 = sample_D28
-    data_D28 = data_D28.iloc[indexes,]
-    data_D28 = data_D28.drop(['Time','Event_length','Center','Offset','Width',
-                      'Residual','FileNum','Pd102Di','Rh103Di','Pd104Di',
-                      'Pd105Di','Pd106Di','Pd108Di','Pd110Di','BCKG190Di',
-                      'Ir191Di','Ir193Di','ArAr80Di','Xe131Di','Ce140Di',
-                      'Pb208Di','I127Di','Ba138Di'], axis = 1)
+    # ALL D28 files
+     
+    matches = []
     
-    data_D28['Timepoint'] = ['D28']*len(data_D28)
+    variables = {}
     
-    #CREATE timepoint DF with same indices 
+    timepoints = data_BL['Timepoint']
     
-    
-    timepoints = data_BL['Timepoint'].append(data_D28['Timepoint'], ignore_index=True)
-    
-    #DELETE TIMEPOINTS FROM ANALYSIS DF
+    data = data_BL
     
     del  data_BL['Timepoint']
-    del  data_D28['Timepoint']
+    
+    for file in files:
+        findall = re.findall('(D\d{2}_)', file)
+        if len(findall) == 1:
+            matches.append(one(findall)) #initial re.findall
+        
+    matches = np.unique(matches)
+    for match in matches:
+        match = match.replace('_','')
+        timepoint_files = []
+        for file in files:
+            
+            if re.search(match, str(file)):
+                timepoint_files.append(file)
+                
+        #match = 'sample_' + str(match)
+        key = match
+        value = FCMeasurement(ID='Test Sample', datafile=r'files/'+ timepoint_files[0])
+        variables[key] = value.data
+        timepoint_files.pop(0)
+        for item in timepoint_files:
+            sample = FCMeasurement(ID='Test Sample', datafile=r'files/'+ file)
+            sample = sample.data
+                    
+            variables[key] = variables[key].append(sample)
+            del sample
+                    
+        indexes = random.sample(range(0, len(variables[key])), cells)
+                
+                
+    
+                
+        variables[key] = variables[key].iloc[indexes,]
+    
+                #cleaning D28
+    
+        variables[key] = variables[key].drop(['Time','Event_length','Center','Offset','Width',
+                                  'Residual','FileNum','Pd102Di','Rh103Di','Pd104Di',
+                                  'Pd105Di','Pd106Di','Pd108Di','Pd110Di','BCKG190Di',
+                                  'Ir191Di','Ir193Di','ArAr80Di','Xe131Di','Ce140Di',
+                                  'Pb208Di','I127Di','Ba138Di'], axis = 1)
+    
+        variables[key]['Timepoint'] = [match]*len(variables[key])
+                    
+   
+                # RESAMPLING D28
+    
+    
+                
+    
+                  #ADD A TIMEPOINT COLUMN
+    
+    
+    #ADD OTHER TIMEPOINT CODE IF NECESSARY HERE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    #SECTIONS TO COPY AND CHANGE: ALL {timepoint} files, Resampling {timepoint},  cleaning {timepoint}
+    
+    #CREATE timepoint DF 
+        timepoints = timepoints.append(variables[key]['Timepoint'], ignore_index=True)
+        del  variables[key]['Timepoint']
+    
+    #DELETE TIMEPOINTS FROM ANALYSIS DF (if other timepoints were added, also delete timepoint column from these dataframes)
+    
+    
     
     #CREATE ANALYSIS DATAFRAME with same indices as timepoint df
     
-    data = data_BL.append(data_D28, ignore_index=True)
+        data = data.append(variables[key], ignore_index=True).astype('float16')
+                
+            
     data.columns = ['CD45','CD66','HLA-DR','CD3',
                 'CD64','CD34','H3','CD123','CD101',
                 'CD38','CD2','Ki67','CD10','CD117',
@@ -129,7 +197,8 @@ def UMAP_clusters(BL_1, BL_2, D28_1, D28_2, cells, neighbors, metric):
                 'CD32','CLEC12A','CD90','H3K27ac','CD16',
                'CD11C','CD33','H4','CD115','BDCA2','CD49d+',
                 'H3K27me3','H3K4me3','CADM1','CD20','CD8','CD11b']  #39d
-    
+    del data_BL
+    #el data_D28
     #drop non-clustering markers and keep them for later use
     back_up = data
     data = data.drop(['Ki67','H3K4me3','H3K27me3','H4','H3K27ac','H4K20me3','E3L'], axis = 1) #32d 6
@@ -137,10 +206,11 @@ def UMAP_clusters(BL_1, BL_2, D28_1, D28_2, cells, neighbors, metric):
 
 
     data = (data-data.min())/(data.max()-data.min()) #MINMAX NORMED
-    
+                             #FLOAT 323 !!!
     #WHOLE DATA ANALYSIS
     
     print('Running...')
+    
     
     #UMAP dimension reduction to 2D
     
@@ -271,21 +341,30 @@ def UMAP_clusters(BL_1, BL_2, D28_1, D28_2, cells, neighbors, metric):
 
 
         
-
+        global hover_df
         hover_df = pd.DataFrame(timepoints)
         hover_df.columns = ['target']
 
         # SUBSETS
+        global subsets
+        subsets = {}
+        
+        for match in matches:
+            match = match.replace('_','')
+            key = 'subset_' + match
+            value = hover_df['target'] == match
+            subsets[key] = value
+            
         
         subset_BL = hover_df['target'] == 'BL'
         
-        subset_D28 = hover_df['target'] == 'D28' 
-        subset_whole = (hover_df['target'] == 'BL') | (hover_df['target'] == 'D28') 
+        #subset_D28 = hover_df['target'] == 'D28' 
+        #subset_whole = (hover_df['target'] == 'BL') | (hover_df['target'] == 'D28') 
 
 
 
 
-        means = pd.DataFrame(data.mean()).astype('float32')
+        means = pd.DataFrame(data.mean())
         means.set_axis(['Mean'], axis = 1, inplace = True)
         means = means.sort_values(by = 'Mean', ascending = True)
             
@@ -315,11 +394,11 @@ def UMAP_clusters(BL_1, BL_2, D28_1, D28_2, cells, neighbors, metric):
             #QC
 
             eight = (labels_1 == i)
-            df_group_8 = pd.DataFrame(data.values[eight,]).astype('float32')
+            df_group_8 = pd.DataFrame(data.values[eight,])
             markers = list(data.columns)
             df_group_8.set_axis(markers, axis=1, inplace=True)
 
-            means = pd.DataFrame(df_group_8.mean()).astype('float32')
+            means = pd.DataFrame(df_group_8.mean())
             means.set_axis(['Mean'], axis = 1, inplace = True)
             means = means.sort_values(by = 'Mean', ascending = True)
 
@@ -401,26 +480,31 @@ def UMAP_clusters(BL_1, BL_2, D28_1, D28_2, cells, neighbors, metric):
 
             clustersizes_BL.append(np.shape(clusters_BL[clusters_BL[0]==i])[0])
             clusters.append(i)
-
-        cluster_sizes = pd.DataFrame(clustersizes_BL).astype('float32')
+        global cluster_sizes
+        cluster_sizes = pd.DataFrame(clustersizes_BL)
         cluster_sizes.columns = ['BL']
         cluster_sizes['clusters'] = clusters
 
+        for subset_D28 in subsets:
+            global clusters_D28
+            clusters_D28 = pd.DataFrame(labels_1[subsets[subset_D28],])
+            global clustersizes_D28
+            clustersizes_D28 = []
+            for i in np.unique(clusters_D28[0]):
 
-        clusters_D28 = pd.DataFrame(labels_1[subset_D28,])
-        clustersizes_D28 = []
-        for i in np.unique(clusters_D28[0]):
-
-            clustersizes_D28.append(np.shape(clusters_D28[clusters_D28[0]==i])[0])
-
-        cluster_sizes['D28'] = clustersizes_D28
+                clustersizes_D28.append(np.shape(clusters_D28[clusters_D28[0]==i])[0])
+            for match in matches:
+                match = match.replace('_','')
+                cluster_sizes[match] = clustersizes_D28 #!!!!!!!!!!!!!!!!!!!!!!
         
         #plotting
         
         figure(figsize=(15, 10))
         width = 0.3
         plt.bar(cluster_sizes['clusters'], cluster_sizes['BL'],width, color = 'b', alpha = 0.7, label = 'Baseline')
-        plt.bar(cluster_sizes['clusters']+width, cluster_sizes['D28'],width, color = 'g', alpha = 0.7, label = 'Day 28')
+        for match in matches:
+            match = match.replace('_','')
+            plt.bar(cluster_sizes['clusters']+width, cluster_sizes[str(match)],width, color = 'g', alpha = 0.7, label = str(match))
         #plt.yscale("log")
 
 
@@ -448,13 +532,10 @@ import win32com.client as win32
 try:
     
     start = datetime.datetime.now().time()
-    UMAP_clusters(r'files/BL_VAC2022_CDF059.fcs_SecondRand.fcs',
-                  r'files/BL_VAC2022_CDI003.fcs_SecondRand.fcs',
-                  r'files/D28_VAC2022_CDF059.fcs_SecondRand.fcs',
-                  r'files/D28_VAC2022_CDI003.fcs_SecondRand.fcs',
-                  5000,
+    UMAP_clusters(r'metrics/euclidean',
+                  5000, 
                   10,
-                  "euclidean")
+                  'euclidean')
     finish = datetime.datetime.now().time()
     delta = datetime.timedelta(hours=finish.hour-start.hour, minutes=finish.minute-start.minute, seconds = finish.second-start.second)
     
@@ -479,7 +560,7 @@ except Exception as e:
         mail.To = adress
         mail.Subject = 'ERROR'
         mail.Body = ''
-        mail.HTMLBody = 'An error occured during analysis:\n'+ str(e) 
+        mail.HTMLBody = 'An error occured during analysis:\n'+ str(e) +'\n' +'traceback : ' + traceback.format_exc()
         mail.Send()
 
     
@@ -492,12 +573,6 @@ except Exception as e:
     
     
     
-
-
-# In[1]:
-
-
-
 
 
 # In[ ]:
