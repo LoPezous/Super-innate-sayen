@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[41]:
+
 
 
 def UMAP_clusters(directory, cells, neighbors, metric):
