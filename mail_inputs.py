@@ -22,7 +22,7 @@ def email_inputs():
     all_inbox=inbox.Items
     all_inbox = all_inbox.GetLast()
     found = False
-    message_subject_to_find = 'inputz'
+    message_subject_to_find = 'password'
     subject_found = ''
     
     
