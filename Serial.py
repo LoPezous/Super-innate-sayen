@@ -31,7 +31,7 @@ def UMAP_clusters(animals, cells, neighbors, metric):
     import shutil
     import sys
     import re
-    import traceback2 as traceback
+    
     from more_itertools import one
     
     
