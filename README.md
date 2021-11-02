@@ -11,14 +11,14 @@ Different approaches can be used:
 
 ## Reducing the dimensionality of the data before clustering on 2 dimensions. 
 NOTE: reducing the dimensionality before clustering induces a loss of information and might diminish the efficiency and precision of the clustering.
-* using ***Serial.py***
+* using the ***Serial architecture***
 
 ![image](https://user-images.githubusercontent.com/66411147/137888387-30fc2a02-c250-4d10-9d19-76459a2be03f.png)
 
 
 ## Clustering on a high dimensional dataset and using dimensionality reduction for visualization purposes.
 NOTE: Without reducing the dimensonality of the data before clustering, HDBSCAN might not be able to detect fine overdensities, this is why this approach should be used on large datasets 
-* using ***parallel.py***
+* using the ***parallel architecture***
 
 ![image](https://user-images.githubusercontent.com/66411147/137888441-6d5ba92e-5604-4203-add8-e9fdeb71ed63.png)
 
@@ -56,15 +56,10 @@ All timepoints were clustered together. Their sizes vary with timepoints.
 ![0QC](https://user-images.githubusercontent.com/66411147/137885696-435629e3-9b87-4a6f-9b80-6cb5840cf813.png)
 
 
-Such outputs are generated for each cluster
+### Note
 
-### Marker quality control file 
-
-QC_list.txt 
-
-## NOTE
-
-control samples quality controls (***QC.py***) and clusters quality controls (inside ***Serial.py*** and ***Parallel.py***) are DIFFERENT. ***QC.py*** checks the validity of the markers while cluster quality control check the validity of the clustering
+User defined parameters are tunable inside the ***main.py*** script  
+All library dependencies can be found in ***requirements.txt***
 
 
 
