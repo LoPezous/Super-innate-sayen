@@ -27,7 +27,7 @@ def main(metric, animals, neighbors, cells, choice="serial", plot=True, scaled=T
 
 if __name__ == "__main__":
     metric_ = "euclidean"
-    animals_ = ["R2D2"]
+    animals_ = ['CDF059','CDI003']
     neighbors_ = 10
     cells_ = 5_000
     main(metric_, animals_, neighbors_, cells_, choice="serial", plot=True, scaled=True)
