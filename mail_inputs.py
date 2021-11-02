@@ -1,15 +1,3 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[ ]:
-
-
-
-
-
-# In[ ]:
-
-
 import subprocess
 import win32com.client
 import time
@@ -22,12 +10,9 @@ def email_inputs():
     all_inbox=inbox.Items
     all_inbox = all_inbox.GetLast()
     found = False
-    message_subject_to_find = 'password'
+    message_subject_to_find = 'inputz'
     subject_found = ''
-    
-    
-        
-        
+
     if all_inbox.Class == 43:
         if message_subject_to_find in all_inbox.Subject:
             subject_found = all_inbox.Subject
@@ -35,22 +20,9 @@ def email_inputs():
             body = all_inbox.Body
             all_inbox.delete()
             return body
-            
-            
-                
-            
-        
 
 
-    
-
-       
-  
-    
-        
-
-while True:  
-    
+while True:
     c = email_inputs()
     if c != None:
 
@@ -82,29 +54,3 @@ while True:
             print(str(c[3]) + ' is not a valid method') 
     else:
         pass
-    
-
-            
-            
-    
-
- 
-
-
-# In[7]:
-
-
-
-
-
-# In[4]:
-
-
-
-
-
-# In[ ]:
-
-
-
-

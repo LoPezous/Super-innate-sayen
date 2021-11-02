@@ -1,0 +1,10 @@
+numpy~=1.21.3
+FlowCytometryTools~=0.5.1
+scipy~=1.7.1
+unidip~=0.1.1
+hdbscan~=0.8.27
+umap~=0.1.1
+matplotlib~=3.4.3
+pandas~=1.3.4
+seaborn~=0.11.2
+scikit-learn~=1.0.1
