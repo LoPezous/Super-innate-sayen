@@ -268,7 +268,7 @@ def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size):
     _01 = hdbscan.HDBSCAN(
         min_samples= min_sample,
         min_cluster_size= int(min_size*len(data)),     #0.00033
-    ).fit_predict(clusterable_embedding_1)
+    ).fit_predict(data)
     
     
     
