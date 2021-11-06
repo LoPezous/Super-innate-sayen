@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[ ]:
+# In[40]:
 
 
 def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size):
@@ -20,7 +20,7 @@ def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size):
     #import umap.umap_ as umap
     import umap
     import hdbscan
-    import umap.plot
+    
     from collections import Counter
     from matplotlib.pyplot import figure
     import matplotlib
@@ -32,11 +32,14 @@ def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size):
     import shutil
     import sys
     import re
-    import traceback2 as traceback
+    import numba
     from more_itertools import one
+    import warnings
+    warnings.filterwarnings('ignore')
     
     
    # Quality control tests used in QC section
+    @numba.jit(forceobj=True)
     def unimodal(dat):
         
         dat = list(dat)       
@@ -44,18 +47,36 @@ def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size):
         intervals = UniDip(dat, alpha=0.05).run()
         if len(intervals) != 1:
         
-            return (False)
+            return False
         else:
-            return (True)
+            return True
     
+    @numba.jit(forceobj=True)
     def spread(dat):
         IQR = stat.iqr(dat)
         if IQR < 200:
             return True
         else:
             return False
+    
+    @numba.jit
+    def QC(columns, df_group, slicer):
         
+        good_markers = [0]
+            
+        bad_markers = [0]
         
+        for p in columns:
+            if (unimodal(df_group[:,slicer])) & (spread(df_group[:,slicer])):
+                
+                good_markers.append(p)
+            else:
+                
+                bad_markers.append(p)
+            slicer += int(1)
+            
+        return good_markers, bad_markers
+         
         
     
     cwd = sys.path[0]
@@ -113,11 +134,11 @@ def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size):
     data_BL = data_BL.iloc[indexes,]
     
     #Cleaning BASELINE
-    data_BL = data_BL.drop(['Time','Event_length','Center','Offset','Width',
+    data_BL = data_BL.drop(['Time','Eventlength','Center','Offset','Width',
                       'Residual','FileNum','102Pd','103Rh','104Pd',
                       '105Pd','106Pd','108Pd','110Pd','190BCKG',
-                      '191Ir','193Ir','80ArAr','131Xe_conta','140Ce_Beads',
-                      '208Pb_Conta','127I_Conta','138Ba_Conta'], axis = 1)
+                      '191Ir','193Ir','80ArAr','131Xeconta','140CeBeads',
+                      '208PbConta','127IConta','138BaConta'], axis = 1)
     
     data_BL['Timepoint'] = ['BL']*len(data_BL)            #ADD A TIMEPOINT COLUMN
     
@@ -130,12 +151,12 @@ def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size):
     variables = {}
     
     timepoints = data_BL['Timepoint']
-    global animales
+    
     animales = data_BL['animal']
     
     del  data_BL['Timepoint']
     del  data_BL['animal']
-    global data
+    
     data = data_BL
     
     
@@ -184,11 +205,11 @@ def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size):
     
                 #cleaning D28
     
-        variables[key] = variables[key].drop(['Time','Event_length','Center','Offset','Width',
+        variables[key] = variables[key].drop(['Time','Eventlength','Center','Offset','Width',
                       'Residual','FileNum','102Pd','103Rh','104Pd',
                       '105Pd','106Pd','108Pd','110Pd','190BCKG',
-                      '191Ir','193Ir','80ArAr','131Xe_conta','140Ce_Beads',
-                      '208Pb_Conta','127I_Conta','138Ba_Conta'], axis = 1)
+                      '191Ir','193Ir','80ArAr','131Xeconta','140CeBeads',
+                      '208PbConta','127IConta','138BaConta'], axis = 1)
     
         variables[key]['Timepoint'] = [match]*len(variables[key])
                     
@@ -231,7 +252,7 @@ def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size):
     del data_BL
     #el data_D28
     #drop non-clustering markers and keep them for later use
-    global back_up
+    
     back_up = data
     data = data.drop(['Ki67','H3K4me3','H3K27me3','H4','H3K27ac','H4K20me3','E3L','CD64','CD2', 'CD45RA', 'CD20'], axis = 1) #32d 6 --> 29
     
@@ -467,24 +488,30 @@ def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size):
 
         #distribution
             
-            good_markers = []
-            bad_markers = []
+            good_markers = list([0])
+            
+            bad_markers = list([0])
+            
             fig, axes = plt.subplots(6, 7, figsize=(17,18), dpi=100)
-
+            y = int(0)
+            #range_ = np.array(range(0,29)).astype('int')
+            good_markers, bad_markers = QC(data.columns, df_group_8.to_numpy().astype('float64'), y)
+            good_markers.pop(0)
+            bad_markers.pop(0)
             for p, ax in zip(data, axes.flatten()):
                 
+                if p in good_markers:
+                    ax.hist(df_group_8[str(p)], bins = 100, density = True, alpha = 0.6)
 
-                ax.hist(df_group_8[str(p)], bins = 100, density = True, alpha = 0.6)
-                if (unimodal(df_group_8[str(p)]) == True) & (spread(df_group_8[str(p)]) == True):
-                    c = 'green'
-                    good_markers.append(True)
+                    sns.kdeplot(df_group_8[str(p)], ax = ax, legend = False, c = 'green')
                 else:
-                    c = 'red'
-                    bad_markers.append(False)
+                    ax.hist(df_group_8[str(p)], bins = 100, density = True, alpha = 0.6)
+
+                    sns.kdeplot(df_group_8[str(p)], ax = ax, legend = False, c = 'red')
                     
-                sns.kdeplot(df_group_8[str(p)], ax = ax, legend = False, c = c)
-                
-                #ax.set_title(str(p))
+            
+              
+                                        
 
             plt.savefig(r'Clusters/' + str(i) + '_distrib.png', dpi=300)
             plt.close()
@@ -558,7 +585,7 @@ def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size):
 
             clustersizes_BL.append(np.shape(clusters_BL[clusters_BL[0]==i])[0])
             clusters.append(i)
-        global cluster_sizes
+        
         cluster_sizes = pd.DataFrame(clustersizes_BL)
         cluster_sizes.columns = ['BL']
         cluster_sizes['clusters'] = clusters
@@ -569,10 +596,12 @@ def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size):
             
             clustersizes_D28 = []
             for i in np.unique(clusters_D28[0]):
-                if any(clusters_D28.isin(i)): #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                    clustersizes_D28.append(np.shape(clusters_D28[clusters_D28[0]==i])[0])
+                if i in clusters_D28.values:
+                    clustersizes_D28.append(np.shape(clusters_D28[clusters_D28[0]==i])[0])#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                    
                 else:
                     clustersizes_D28.append(0)
+                    
                     
             for match in matches:
                 match = match.replace('_','')
@@ -610,33 +639,33 @@ def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size):
 
 import datetime
 import win32com.client as win32
-#try:
+try:
     
-start = datetime.datetime.now().time()
-UMAP_clusters(['CDF059','CDI003'],
-              5000, 
-              10,
-              'euclidean',
-              20,
-              0.00033)
-              
-                
-finish = datetime.datetime.now().time()
-delta = datetime.timedelta(hours=finish.hour-start.hour, minutes=finish.minute-start.minute, seconds = finish.second-start.second)
-    
-for adress in ['martin.pezous@cea.fr', 'martin.pezous-puech@live.fr']:
-
-    outlook = win32.Dispatch('Outlook.Application')
-    mail = outlook.CreateItem(0)
-    mail.To = adress
-    mail.Subject = 'Analysis: Done'
-    mail.Body = ''
-    mail.HTMLBody = 'The analysis was succesful and ran for ' + str(delta) + ' (Days : Hours : Minutes : seconds)'
-    mail.Send()
+    start = datetime.datetime.now().time()
+    UMAP_clusters(['CDF059','CDI003'],
+                  1000, 
+                  10,
+                  'euclidean',
+                  20,
+                  0.01)
 
 
-#except Exception as e:
-"""
+    finish = datetime.datetime.now().time()
+    delta = datetime.timedelta(hours=finish.hour-start.hour, minutes=finish.minute-start.minute, seconds = finish.second-start.second)
+
+    for adress in ['martin.pezous@cea.fr', 'martin.pezous-puech@live.fr']:
+
+        outlook = win32.Dispatch('Outlook.Application')
+        mail = outlook.CreateItem(0)
+        mail.To = adress
+        mail.Subject = 'Analysis: Done'
+        mail.Body = ''
+        mail.HTMLBody = 'The analysis was succesful and ran for ' + str(delta) + ' (Days : Hours : Minutes : seconds)'
+        mail.Send()
+
+
+except Exception as e:
+
     
     for adress in ['martin.pezous@cea.fr', 'martin.pezous-puech@live.fr']:
 
@@ -648,32 +677,5 @@ for adress in ['martin.pezous@cea.fr', 'martin.pezous-puech@live.fr']:
         mail.HTMLBody = 'An error occured during analysis:\n'+ str(e) 
         mail.Send()
     
-"""    
-
-      
-
-
-
-    
-    
-    
-
-
-# In[2]:
-
-
-for x in back_up:
-    print(back_up[str(x)].max())
-
-
-# In[3]:
-
-
-matches
-
-
-# In[ ]:
-
-
-
+ 
 
