@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[72]:
+# In[16]:
 
 
-def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size):
+def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size, panel, channels_to_drop, markers_to_drop):
     
     import FlowCytometryTools
     import numpy as np
@@ -147,11 +147,7 @@ def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size):
     data_BL = data_BL.iloc[indexes,]
     
     #Cleaning BASELINE
-    data_BL = data_BL.drop(['Time','Eventlength','Center','Offset','Width',
-                      'Residual','FileNum','102Pd','103Rh','104Pd',
-                      '105Pd','106Pd','108Pd','110Pd','190BCKG',
-                      '191Ir','193Ir','80ArAr','131Xeconta','140CeBeads',
-                      '208PbConta','127IConta','138BaConta'], axis = 1)
+    data_BL = data_BL.drop(channels_to_drop, axis = 1)
     
     data_BL['Timepoint'] = ['BL']*len(data_BL)            #ADD A TIMEPOINT COLUMN
     
@@ -218,11 +214,7 @@ def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size):
     
                 #cleaning D28
     
-        variables[key] = variables[key].drop(['Time','Eventlength','Center','Offset','Width',
-                      'Residual','FileNum','102Pd','103Rh','104Pd',
-                      '105Pd','106Pd','108Pd','110Pd','190BCKG',
-                      '191Ir','193Ir','80ArAr','131Xeconta','140CeBeads',
-                      '208PbConta','127IConta','138BaConta'], axis = 1)
+        variables[key] = variables[key].drop(channels_to_drop, axis = 1)
     
         variables[key]['Timepoint'] = [match]*len(variables[key])
                     
@@ -254,14 +246,7 @@ def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size):
         data = data.append(variables[key], ignore_index=True)
                 
             
-    data.columns = ['CD45','CD66','HLA-DR','CD3',
-                'CD64','CD34','H3','CD123','CD101',
-                'CD38','CD2','Ki67','CD10','CD117',
-                'CX3CR1','E3L','CD172a','CD45RA',
-                'CD14','Siglec1', 'CD1C','H4K20me3',
-                'CD32','CLEC12A','CD90','H3K27ac','CD16',
-               'CD11C','CD33','H4','CD115','BDCA2','CD49d+',
-                'H3K27me3','H3K4me3','CADM1','CD20','CD8','CD11b']  #39d
+    data.columns = panel  #39d
     del data_BL
     #el data_D28
     #drop non-clustering markers and keep them for later use
@@ -317,7 +302,11 @@ def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size):
     
    
     #UMAP PLOTS
+    
+    
     for labels_1, percent in zip(labels, names):
+        
+        
         
         
         os.chdir(cwd + '/Results/metrics/' + str(metric) + '/' + str(percent))
@@ -382,10 +371,9 @@ def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size):
         os.makedirs(path)
 
         for x in back_up:
-            #for timepoint in np.unique(timepoints):
-                #print(' - ' + str(timepoint))
+            
                 fig, ax = plt.subplots(figsize = (12,12))
-                #tmp = (timepoints == timepoint)
+                
                 for cluster in np.unique(labels_1):
                     
 
@@ -432,11 +420,14 @@ def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size):
         
         good_clusters = []
         bad_clusters = []
+        t = 1
+        u = 0
         for i in np.unique(labels_1):
             
-            
-            
-            
+            #print(str(int((t/len(data.columns))*100)) + ' %', end='\r')
+            print('█'*t + '▯'*(len(data.columns)-u) + '|', end='\r')
+            t+=1
+            u+=1
             
             #QC
 
@@ -452,19 +443,16 @@ def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size):
             fig, axes = plt.subplots(6, 7, figsize=(17,18), dpi=100)
             
             
-            start = datetime.datetime.now()
+            
             
 
             good_markers, bad_markers = QC(np.array(data.columns).astype('str'), df_group_8.to_numpy().astype('float64'))
             #good_markers, bad_markers = QC(data.columns, df_group_8)
-            finish = datetime.datetime.now()
-            delta = datetime.timedelta(days = finish.day - start.day, hours=finish.hour-start.hour, minutes=finish.minute-start.minute, seconds = finish.second-start.second)
             
-            print(delta.seconds/60)
             
-            print(len(good_markers))
-            print(len(bad_markers))
             for p, ax in zip(data, axes.flatten()):
+                
+                
                 
                 if p in good_markers:
                     ax.hist(df_group_8[str(p)], bins = 100, density = True, alpha = 0.6)
@@ -607,13 +595,44 @@ import datetime
 import win32com.client as win32
 try:
     
-    start = datetime.datetime.now()
-    UMAP_clusters(['CDF059','CDI003'],
-                  1000, 
-                  10,
-                  'euclidean',
-                  20,
-                  0.01)
+    start = datetime.datetime.now()                                             
+                                                                                                    #PART TO MODIFY
+#========================================================================================================================================================================================================================================   
+#========================================================================================================================================================================================================================================    
+    
+    #The order must match the order found is the fcs file
+    panel_ = ['CD45','CD66','HLA-DR','CD3',
+                'CD64','CD34','H3','CD123','CD101',
+                'CD38','CD2','Ki67','CD10','CD117',
+                'CX3CR1','E3L','CD172a','CD45RA',
+                'CD14','Siglec1', 'CD1C','H4K20me3',
+                'CD32','CLEC12A','CD90','H3K27ac','CD16',
+               'CD11C','CD33','H4','CD115','BDCA2','CD49d+',
+                'H3K27me3','H3K4me3','CADM1','CD20','CD8','CD11b']
+    
+    #The order does not matter
+    channels_to_drop_ = ['Time','Eventlength','Center','Offset','Width',
+                      'Residual','FileNum','102Pd','103Rh','104Pd',
+                      '105Pd','106Pd','108Pd','110Pd','190BCKG',
+                      '191Ir','193Ir','80ArAr','131Xeconta','140CeBeads',
+                      '208PbConta','127IConta','138BaConta']
+    
+    #The order does not matter (if you do not wish to drop markers, write: [])
+    markers_to_drop_ = ['Ki67','H3K4me3','H3K27me3','H4','H3K27ac','H4K20me3','E3L','CD64','CD2', 'CD45RA', 'CD20']
+    
+   
+    
+    UMAP_clusters(animals = ['CDF059','CDI003'],          # list of animal tags
+                  cells = 1000,                           # Downsample size for each timepoint
+                  neighbors = 10,                         # UMAP parameter
+                  metric = 'euclidean',                   # UMAP parameter
+                  min_sample = 20,                        # HDBSCAN parameter
+                  min_size = 0.01,                        # HDBSCAN parameter
+                  panel = panel_,                         # declared above
+                  channels_to_drop = channels_to_drop_,   # declared above
+                  markers_to_drop = markers_to_drop_)     # declared above
+                  
+                 
 
 
     finish = datetime.datetime.now()
