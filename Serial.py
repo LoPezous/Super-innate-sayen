@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[40]:
+# In[ ]:
 
 
 def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size):
@@ -641,17 +641,17 @@ import datetime
 import win32com.client as win32
 try:
     
-    start = datetime.datetime.now().time()
+    start = datetime.datetime.now()
     UMAP_clusters(['CDF059','CDI003'],
-                  1000, 
+                  10000, 
                   10,
                   'euclidean',
                   20,
-                  0.01)
+                  0.00033)
 
 
-    finish = datetime.datetime.now().time()
-    delta = datetime.timedelta(hours=finish.hour-start.hour, minutes=finish.minute-start.minute, seconds = finish.second-start.second)
+    finish = datetime.datetime.now()
+    delta = datetime.timedelta(days = finish.day - start.day, hours=finish.hour-start.hour, minutes=finish.minute-start.minute, seconds = finish.second-start.second)
 
     for adress in ['martin.pezous@cea.fr', 'martin.pezous-puech@live.fr']:
 
@@ -660,7 +660,7 @@ try:
         mail.To = adress
         mail.Subject = 'Analysis: Done'
         mail.Body = ''
-        mail.HTMLBody = 'The analysis was succesful and ran for ' + str(delta) + ' (Days : Hours : Minutes : seconds)'
+        mail.HTMLBody = 'The analysis ran for ' + str(delta.seconds/3600) + ' hours'
         mail.Send()
 
 
@@ -678,4 +678,10 @@ except Exception as e:
         mail.Send()
     
  
+
+
+# In[ ]:
+
+
+
 
