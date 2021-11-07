@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[ ]:
+# In[72]:
 
 
 def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size):
@@ -35,11 +35,13 @@ def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size):
     import numba
     from more_itertools import one
     import warnings
+    import datetime
+    import time
     warnings.filterwarnings('ignore')
     
     
    # Quality control tests used in QC section
-    @numba.jit(forceobj=True)
+    @numba.jit(forceobj = True)
     def unimodal(dat):
         
         dat = list(dat)       
@@ -51,20 +53,22 @@ def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size):
         else:
             return True
     
-    @numba.jit(forceobj=True)
+    @numba.jit(forceobj = True)
     def spread(dat):
         IQR = stat.iqr(dat)
         if IQR < 200:
             return True
         else:
             return False
-    
+    """
     @numba.jit
-    def QC(columns, df_group, slicer):
+    def QC(columns, df_group):
         
         good_markers = [0]
             
         bad_markers = [0]
+        
+        slicer = int(0)
         
         for p in columns:
             if (unimodal(df_group[:,slicer])) & (spread(df_group[:,slicer])):
@@ -76,7 +80,16 @@ def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size):
             slicer += int(1)
             
         return good_markers, bad_markers
-         
+    """
+    @numba.jit
+    def QC(columns, df_group):
+        
+        good_markers = [columns[i] for i in range(0,len(columns)) if (unimodal(df_group[:,i])) & (spread(df_group[:,i]))]
+        
+        bad_markers = [marker for marker in columns if marker not in good_markers]
+        
+        return good_markers, bad_markers
+       
         
     
     cwd = sys.path[0]
@@ -406,43 +419,16 @@ def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size):
         # SUBSETS
         
         subsets = {}
-        
+        # subsets for timepoints != BL
         for match in matches:
             match = match.replace('_','')
             key = 'subset_' + match
             value = hover_df['target'] == match
             subsets[key] = value
             
-        
+        #subsets for timepoints == BL
         subset_BL = hover_df['target'] == 'BL'
         
-        #subset_D28 = hover_df['target'] == 'D28' 
-        #subset_whole = (hover_df['target'] == 'BL') | (hover_df['target'] == 'D28') 
-
-
-
-
-        means = pd.DataFrame(data.mean())
-        means.set_axis(['Mean'], axis = 1, inplace = True)
-        means = means.sort_values(by = 'Mean', ascending = True)
-            
-        error = np.std(data)
-        
-        figure(figsize=(15, 10))
-        #plt.barh(means.index, means['Mean'],xerr=error)
-        plt.errorbar(means['Mean'], means.index, xerr=[0]*28, fmt = 'o', ecolor = 'blue', c = 'red') #CHANGES WITH DIMENSIONS !!!!!!!!!
-        plt.xscale('log')
-        plt.xlabel('Mean intensity', fontsize = 18)
-        plt.ylabel('Channels', fontsize = 18)
-
-
-        plt.savefig(r'Clusters/WHOLE_markers.png', dpi=300)
-        plt.close()
-
-        files = glob.glob(r'Clusters/*')
-        for f in files:
-            os.remove(f)
-        print('deleted previous cluster results')
         
         good_clusters = []
         bad_clusters = []
@@ -451,53 +437,33 @@ def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size):
             
             
             
-            fig, (ax1, ax2) = plt.subplots(1,2, figsize=(20,10))
+            
             #QC
 
             eight = (labels_1 == i)
             df_group_8 = pd.DataFrame(data.values[eight,])
             markers = list(data.columns)
             df_group_8.set_axis(markers, axis=1, inplace=True)
-
-            means = pd.DataFrame(df_group_8.mean())
-            means.set_axis(['Mean'], axis = 1, inplace = True)
-            means = means.sort_values(by = 'Mean', ascending = True)
-
-            error = np.std(df_group_8)
             
-            #figure(figsize=(15, 10))
-            #plt.barh(means.index, means['Mean'],xerr=error)
-            ax1.errorbar(means['Mean'], means.index, xerr=error, fmt = 'o', ecolor = 'blue', c = 'red')
-            #plt.xscale('log')
-            ax1.set_xlabel('Mean intensity', fontsize = 18)
-            ax1.set_ylabel('Channels', fontsize = 18)
-            ax1.set_title('Quality Control')
-
-            #Signature
-
-            ax2.errorbar(means['Mean'], means.index, xerr=[0]*28, fmt = 'o', ecolor = 'blue', c = 'red')  #CHANGES WITH DIMENSIONS !!!!!
-            ax2.set_xscale('log')
-            ax2.set_xlabel('Mean intensity (log)', fontsize = 18)
-
-            ax1.set_title('Signature')
-
             
-                
-            plt.savefig(r'Clusters/' + str(i) + '_markers.png', dpi=300)
-            plt.close()
-
         #distribution
             
-            good_markers = list([0])
-            
-            bad_markers = list([0])
-            
+
             fig, axes = plt.subplots(6, 7, figsize=(17,18), dpi=100)
-            y = int(0)
-            #range_ = np.array(range(0,29)).astype('int')
-            good_markers, bad_markers = QC(data.columns, df_group_8.to_numpy().astype('float64'), y)
-            good_markers.pop(0)
-            bad_markers.pop(0)
+            
+            
+            start = datetime.datetime.now()
+            
+
+            good_markers, bad_markers = QC(np.array(data.columns).astype('str'), df_group_8.to_numpy().astype('float64'))
+            #good_markers, bad_markers = QC(data.columns, df_group_8)
+            finish = datetime.datetime.now()
+            delta = datetime.timedelta(days = finish.day - start.day, hours=finish.hour-start.hour, minutes=finish.minute-start.minute, seconds = finish.second-start.second)
+            
+            print(delta.seconds/60)
+            
+            print(len(good_markers))
+            print(len(bad_markers))
             for p, ax in zip(data, axes.flatten()):
                 
                 if p in good_markers:
@@ -643,11 +609,11 @@ try:
     
     start = datetime.datetime.now()
     UMAP_clusters(['CDF059','CDI003'],
-                  10000, 
+                  1000, 
                   10,
                   'euclidean',
                   20,
-                  0.00033)
+                  0.01)
 
 
     finish = datetime.datetime.now()
