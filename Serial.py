@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[16]:
+# In[6]:
 
 
 def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size, panel, channels_to_drop, markers_to_drop):
@@ -105,7 +105,7 @@ def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size, panel
             shutil.rmtree(path)
         os.makedirs(path)
         
-
+    print('step 1/5: Handling data...                     ', end = '\r')
     #BASELINE
     files = os.listdir('files')
     
@@ -252,7 +252,7 @@ def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size, panel
     #drop non-clustering markers and keep them for later use
     
     back_up = data
-    data = data.drop(['Ki67','H3K4me3','H3K27me3','H4','H3K27ac','H4K20me3','E3L','CD64','CD2', 'CD45RA', 'CD20'], axis = 1) #32d 6 --> 29
+    data = data.drop(markers_to_drop, axis = 1) #32d 6 --> 29
     
     #DATA PER ANIMAL
   
@@ -267,8 +267,8 @@ def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size, panel
     #data = (data-data.min())/(data.max()-data.min()) #MINMAX NORMED
                              #FLOAT 323 !!!
     #WHOLE DATA ANALYSIS
-    
-    print('Running...')
+    os.system('cls')
+    print('step 2/5: Running UMAP...           ', end = '\r')
     
     
     #UMAP dimension reduction to 2D
@@ -280,8 +280,8 @@ def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size, panel
     ).fit_transform(data)
     
     
-    
-    
+    os.system('cls')
+    print('step 3/5: Running HDBSCAN...                ', end = '\r')
     #HDBSCAN clustering over UMAP embedding
     
     _01 = hdbscan.HDBSCAN(
@@ -299,8 +299,8 @@ def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size, panel
     names = ['_01']
     
     
-    
-   
+    os.system('cls')
+    print('step 4/5: Plotting...                                      ')
     #UMAP PLOTS
     
     
@@ -311,8 +311,9 @@ def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size, panel
         
         os.chdir(cwd + '/Results/metrics/' + str(metric) + '/' + str(percent))
         
-    
+        
         for timepoint in np.unique(timepoints):
+            
             
             color = iter(cm.hsv(np.linspace(0, 1, len(np.unique(labels_1)*2)))) #choosing gradient as discrete colors depending on number of clusters
 
@@ -320,7 +321,13 @@ def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size, panel
             fig, ax = plt.subplots(figsize = (15,15))
             
             tmp = (timepoints == timepoint) #timepoing condition boolean list
+            t = 1
+            u = 0
             for cluster in np.unique(labels_1):
+                
+                print(str(int(t/len(np.unique(labels_1))*100)) + ' %' + '|' + '█'*t + ' '*(len(np.unique(labels_1))-u) + '|', end = '\r')
+                t+=1
+                u+=1
 
 
                 
@@ -369,30 +376,36 @@ def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size, panel
         if os.path.exists(path):                                      #DELETES EXISTING DIRS AND RECREATE THEM
             shutil.rmtree(path)
         os.makedirs(path)
-
+        
+        t = 1
+        u = 0
         for x in back_up:
             
-                fig, ax = plt.subplots(figsize = (12,12))
+            print(str(int(t/len(back_up.columns)*100)) + ' %' + '|' + '█'*t + ' '*(len(back_up.columns)-u) + '|          ', end = '\r')
+            t+=1
+            u+=1
                 
-                for cluster in np.unique(labels_1):
+            fig, ax = plt.subplots(figsize = (12,12))
+                
+            for cluster in np.unique(labels_1):
                     
 
-                    clustered = (labels_1 == cluster)
+                clustered = (labels_1 == cluster)
 
 
-                    plt.scatter(clusterable_embedding_1[clustered][:,0],
-                                clusterable_embedding_1[clustered][:,1],
-                                s=0.1,
-                                c = back_up[clustered][str(x)],
-                                cmap='jet', norm=matplotlib.colors.LogNorm())
-                    #plt.clim(0.1,1000)
-                    plt.clim(vmin = 0.1, vmax = back_up[clustered][str(x)].max())
-                plt.colorbar()
+                plt.scatter(clusterable_embedding_1[clustered][:,0],
+                            clusterable_embedding_1[clustered][:,1],
+                            s=0.1,
+                            c = back_up[clustered][str(x)],
+                            cmap='jet', norm=matplotlib.colors.LogNorm())
+                #plt.clim(0.1,1000)
+                plt.clim(vmin = 0.1, vmax = back_up[clustered][str(x)].max())
+            plt.colorbar()
                 
                 
                 
-                plt.savefig(r'UMAP/other_markers/_' + str(x) + '.png', dpi=300)
-                plt.close()
+            plt.savefig(r'UMAP/other_markers/_' + str(x) + '.png', dpi=300)
+            plt.close()
 
 
 
@@ -422,10 +435,12 @@ def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size, panel
         bad_clusters = []
         t = 1
         u = 0
+        os.system('cls')
+        print('step 5/5: Cluster quality control...                                             ')
         for i in np.unique(labels_1):
             
             #print(str(int((t/len(data.columns))*100)) + ' %', end='\r')
-            print('█'*t + '▯'*(len(data.columns)-u) + '|', end='\r')
+            print(str(int(t/len(data.columns)*100)) + ' %' + '|' + '█'*t + ' '*(len(data.columns)-u) + '|                                                ', end='\r')
             t+=1
             u+=1
             
@@ -582,7 +597,7 @@ def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size, panel
         
         plt.savefig(r'Clusters/cluster_composition.png', dpi=300)
         plt.close()
-        print('Done')
+        print('\nanalysis completed')
         
 
 
