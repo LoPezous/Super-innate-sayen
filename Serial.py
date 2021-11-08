@@ -105,7 +105,7 @@ def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size, panel
             shutil.rmtree(path)
         os.makedirs(path)
         
-    print('step 1/5: Handling data...                     ', end = '\r')
+    print('step 1/5: Handling data...')
     #BASELINE
     files = os.listdir('files')
     
@@ -267,8 +267,8 @@ def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size, panel
     #data = (data-data.min())/(data.max()-data.min()) #MINMAX NORMED
                              #FLOAT 323 !!!
     #WHOLE DATA ANALYSIS
-    os.system('cls')
-    print('step 2/5: Running UMAP...           ', end = '\r')
+    
+    print('step 2/5: Running UMAP...')
     
     
     #UMAP dimension reduction to 2D
@@ -280,8 +280,8 @@ def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size, panel
     ).fit_transform(data)
     
     
-    os.system('cls')
-    print('step 3/5: Running HDBSCAN...                ', end = '\r')
+    
+    print('step 3/5: Running HDBSCAN...                ')
     #HDBSCAN clustering over UMAP embedding
     
     _01 = hdbscan.HDBSCAN(
@@ -299,8 +299,8 @@ def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size, panel
     names = ['_01']
     
     
-    os.system('cls')
-    print('step 4/5: Plotting...                                      ')
+    
+    print('step 4/5: Plotting...')
     #UMAP PLOTS
     
     
@@ -435,12 +435,12 @@ def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size, panel
         bad_clusters = []
         t = 1
         u = 0
-        os.system('cls')
-        print('step 5/5: Cluster quality control...                                             ')
+        
+        print('step 5/5: Cluster quality control...                                ')
         for i in np.unique(labels_1):
             
             #print(str(int((t/len(data.columns))*100)) + ' %', end='\r')
-            print(str(int(t/len(data.columns)*100)) + ' %' + '|' + '█'*t + ' '*(len(data.columns)-u) + '|                                                ', end='\r')
+            print(str(int(t/len(data.columns)*100)) + ' %' + '|' + '█'*t + ' '*(len(data.columns)-u) + '|', end='\r')
             t+=1
             u+=1
             
@@ -626,11 +626,11 @@ try:
                 'H3K27me3','H3K4me3','CADM1','CD20','CD8','CD11b']
     
     #The order does not matter
-    channels_to_drop_ = ['Time','Eventlength','Center','Offset','Width',
+    channels_to_drop_ = ['Time','Event_length','Center','Offset','Width',
                       'Residual','FileNum','102Pd','103Rh','104Pd',
                       '105Pd','106Pd','108Pd','110Pd','190BCKG',
-                      '191Ir','193Ir','80ArAr','131Xeconta','140CeBeads',
-                      '208PbConta','127IConta','138BaConta']
+                      '191Ir','193Ir','80ArAr','131Xe_conta','140Ce_Beads',
+                      '208Pb_Conta','127I_Conta','138Ba_Conta']
     
     #The order does not matter (if you do not wish to drop markers, write: [])
     markers_to_drop_ = ['Ki67','H3K4me3','H3K27me3','H4','H3K27ac','H4K20me3','E3L','CD64','CD2', 'CD45RA', 'CD20']
@@ -638,11 +638,11 @@ try:
    
     
     UMAP_clusters(animals = ['CDF059','CDI003'],          # list of animal tags
-                  cells = 1000,                           # Downsample size for each timepoint
+                  cells = 500000,                           # Downsample size for each timepoint
                   neighbors = 10,                         # UMAP parameter
                   metric = 'euclidean',                   # UMAP parameter
                   min_sample = 20,                        # HDBSCAN parameter
-                  min_size = 0.01,                        # HDBSCAN parameter
+                  min_size = 0.00033,                       # HDBSCAN parameter
                   panel = panel_,                         # declared above
                   channels_to_drop = channels_to_drop_,   # declared above
                   markers_to_drop = markers_to_drop_)     # declared above
