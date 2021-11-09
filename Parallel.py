@@ -1,65 +1,97 @@
 #!/usr/bin/env python
 # coding: utf-8
+import FlowCytometryTools
+import numpy as np
+from sklearn.preprocessing import StandardScaler
+import matplotlib.pyplot as plt
+import seaborn as sns
+import pandas as pd
+import os
+import glob
+from FlowCytometryTools import FCMeasurement, ThresholdGate
+import random
+from sklearn.decomposition import PCA
+#import umap.umap_ as umap
+import umap
+import hdbscan
+    
+from collections import Counter
+from matplotlib.pyplot import figure
+import matplotlib
+from matplotlib.pyplot import cm
+from unidip import UniDip
+import scipy.stats as stat
+import datetime
+import win32com.client as win32
+import shutil
+import sys
+import re
+import numba
+from more_itertools import one
+import warnings
+import datetime
+import time
+import multiprocessing
+warnings.filterwarnings('ignore')
 
-# In[6]:
+global good_mark
+good_mark = list()
+global bad_mark
+bad_mark = list()
 
+def chunks(lst, n):
+    for i in range(0, len(lst), n):
+        
+        yield lst[i:i + n]
+        
+
+def unimodal(array):
+        
+    #dat = list(dat)       
+    array = np.msort(array)
+    intervals = [UniDip(array[:,i], alpha=0.05).run() for i in range(0,array.shape[1])]
+    return np.array([False if len(interval) != 1 else True for interval in intervals])
+    
+    
+def spread(array):
+    IQR = stat.iqr(array, axis = 0)
+    return IQR < 2
+
+
+
+def QC_cond(chunk, df, colonnes):
+   
+    unimod = unimodal(df[:, chunk])
+    spd = spread(df[:, chunk])
+    condition = (unimod & spd)
+    good_mark.append([colonnes[chunk][condition]])
+    bad_mark.append([i for i in colonnes[chunk] if i not in good_mark])
+    
+    
+
+def QC(columns, df_group, cores):
+        
+    process_pool = multiprocessing.Pool(cores)
+            
+    args = []
+    for chunk in list(chunks(list(range(0, len(columns))), cores)):
+        args.append((chunk,df_group, columns))
+            
+    process_pool.starmap(QC_cond, args)
+    process_pool.close()
+    process_pool.join()
+
+
+             
+                      
+    
 
 def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size, panel, channels_to_drop, markers_to_drop):
     
-    import FlowCytometryTools
-    import numpy as np
-    from sklearn.preprocessing import StandardScaler
-    import matplotlib.pyplot as plt
-    import seaborn as sns
-    import pandas as pd
-    import os
-    import glob
-    from FlowCytometryTools import FCMeasurement, ThresholdGate
-    import random
-    from sklearn.decomposition import PCA
-    #import umap.umap_ as umap
-    import umap
-    import hdbscan
-    
-    from collections import Counter
-    from matplotlib.pyplot import figure
-    import matplotlib
-    from matplotlib.pyplot import cm
-    from unidip import UniDip
-    import scipy.stats as stat
-    import datetime
-    import win32com.client as win32
-    import shutil
-    import sys
-    import re
-    import numba
-    from more_itertools import one
-    import warnings
-    import datetime
-    import time
-    warnings.filterwarnings('ignore')
-    
     
    # Quality control tests used in QC section
-    @numba.jit(forceobj = True)
-    def unimodal(dat):
-        
-        dat = list(dat)       
-        dat = np.msort(dat)
-        intervals = UniDip(dat, alpha=0.05).run()
-        if len(intervals) != 1:
-        
-            return False
-        else:
-            return True
     
-    @numba.jit(forceobj = True)
-    def spread(dat):
-        IQR = stat.iqr(dat)
-        if IQR < 200:
-            return True
-        else:
-            return False
+
     """
     @numba.jit
     def QC(columns, df_group):
@@ -81,16 +113,7 @@ def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size, panel
             
         return good_markers, bad_markers
     """
-    @numba.jit
-    def QC(columns, df_group):
-        
-        good_markers = [columns[i] for i in range(0,len(columns)) if (unimodal(df_group[:,i])) & (spread(df_group[:,i]))]
-        
-        bad_markers = [marker for marker in columns if marker not in good_markers]
-        
-        return good_markers, bad_markers
-       
-        
+    
     
     cwd = sys.path[0]
     os.chdir(cwd)
@@ -321,13 +344,10 @@ def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size, panel
             fig, ax = plt.subplots(figsize = (15,15))
             
             tmp = (timepoints == timepoint) #timepoing condition boolean list
-            t = 1
-            u = 0
+            
             for cluster in np.unique(labels_1):
                 
-                print(str(int(t/len(np.unique(labels_1))*100)) + ' %' + '|' + '█'*t + ' '*(len(np.unique(labels_1))-u) + '|', end = '\r')
-                t+=1
-                u+=1
+                
 
 
                 
@@ -398,8 +418,8 @@ def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size, panel
                             s=0.1,
                             c = back_up[clustered][str(x)],
                             cmap='jet', norm=matplotlib.colors.LogNorm())
-                #plt.clim(0.1,1000)
-                plt.clim(vmin = 0.1, vmax = back_up[clustered][str(x)].max())
+                plt.clim(0.1,1000)
+                #plt.clim(vmin = 0.1, vmax = back_up[clustered][str(x)].max())
             plt.colorbar()
                 
                 
@@ -440,7 +460,7 @@ def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size, panel
         for i in np.unique(labels_1):
             
             #print(str(int((t/len(data.columns))*100)) + ' %', end='\r')
-            print(str(int(t/len(data.columns)*100)) + ' %' + '|' + '█'*t + ' '*(len(data.columns)-u) + '|', end='\r')
+            print(str(int(t/len(np.unique(labels_1))*100)) + ' %' + '|' + '█'*t + ' '*(len(np.unique(labels_1))-u) + '|', end='\r')
             t+=1
             u+=1
             
@@ -459,9 +479,13 @@ def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size, panel
             
             
             
+            good_mark = list()
+            bad_mark = list()
             
-
-            good_markers, bad_markers = QC(np.array(data.columns).astype('str'), df_group_8.to_numpy().astype('float64'))
+            QC(np.array(data.columns).astype('str'), df_group_8.to_numpy().astype('float64'), 6)
+            
+            good_markers = [j for i in good_mark for j in i]
+            bad_markers = [j for i in bad_mark for j in i]
             #good_markers, bad_markers = QC(data.columns, df_group_8)
             
             
@@ -486,8 +510,14 @@ def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size, panel
             plt.close()
             
             #good cluster plot
-            good = len(good_markers)/(len(good_markers) + len(bad_markers))
-            bad = len(bad_markers)/(len(good_markers) + len(bad_markers))
+            try:
+                good = len(good_markers)/(len(good_markers) + len(bad_markers))
+            except:
+                good = 0
+            try:
+                bad = len(bad_markers)/(len(good_markers) + len(bad_markers))
+            except:
+                bad = 0
             
             if good > 0.7:
                 good_clusters.append(str(i))
@@ -550,10 +580,13 @@ def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size, panel
         clusters_BL = pd.DataFrame(labels_1[subset_BL,])
         clustersizes_BL = []
         clusters = []
-        for i in np.unique(clusters_BL[0]):
+        for i in np.unique(labels_1):
+            if i in clusters_BL.values:
 
-            clustersizes_BL.append(np.shape(clusters_BL[clusters_BL[0]==i])[0])
-            clusters.append(i)
+                clustersizes_BL.append(np.shape(clusters_BL[clusters_BL[0]==i])[0])
+                clusters.append(i)
+            else:
+                clustersizes_BL.append(0)
         
         cluster_sizes = pd.DataFrame(clustersizes_BL)
         cluster_sizes.columns = ['BL']
@@ -564,7 +597,7 @@ def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size, panel
             clusters_D28 = pd.DataFrame(labels_1[subsets[subset_D28],])
             
             clustersizes_D28 = []
-            for i in np.unique(clusters_D28[0]):
+            for i in np.unique(labels_1):
                 if i in clusters_D28.values:
                     clustersizes_D28.append(np.shape(clusters_D28[clusters_D28[0]==i])[0])#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                     
@@ -608,46 +641,47 @@ def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size, panel
 
 import datetime
 import win32com.client as win32
-try:
+if __name__ == '__main__':
     
+
     start = datetime.datetime.now()                                             
-                                                                                                    #PART TO MODIFY
-#========================================================================================================================================================================================================================================   
-#========================================================================================================================================================================================================================================    
-    
-    #The order must match the order found is the fcs file
+                                                                                                                #PART TO MODIFY
+            #========================================================================================================================================================================================================================================   
+            #========================================================================================================================================================================================================================================    
+
+            #The order must match the order found is the fcs file
     panel_ = ['CD45','CD66','HLA-DR','CD3',
-                'CD64','CD34','H3','CD123','CD101',
-                'CD38','CD2','Ki67','CD10','CD117',
-                'CX3CR1','E3L','CD172a','CD45RA',
-                'CD14','Siglec1', 'CD1C','H4K20me3',
-                'CD32','CLEC12A','CD90','H3K27ac','CD16',
-               'CD11C','CD33','H4','CD115','BDCA2','CD49d+',
-                'H3K27me3','H3K4me3','CADM1','CD20','CD8','CD11b']
-    
-    #The order does not matter
+                            'CD64','CD34','H3','CD123','CD101',
+                            'CD38','CD2','Ki67','CD10','CD117',
+                            'CX3CR1','E3L','CD172a','CD45RA',
+                            'CD14','Siglec1', 'CD1C','H4K20me3',
+                            'CD32','CLEC12A','CD90','H3K27ac','CD16',
+                           'CD11C','CD33','H4','CD115','BDCA2','CD49d+',
+                            'H3K27me3','H3K4me3','CADM1','CD20','CD8','CD11b']
+
+                #The order does not matter
     channels_to_drop_ = ['Time','Event_length','Center','Offset','Width',
-                      'Residual','FileNum','102Pd','103Rh','104Pd',
-                      '105Pd','106Pd','108Pd','110Pd','190BCKG',
-                      '191Ir','193Ir','80ArAr','131Xe_conta','140Ce_Beads',
-                      '208Pb_Conta','127I_Conta','138Ba_Conta']
-    
-    #The order does not matter (if you do not wish to drop markers, write: [])
+                                  'Residual','FileNum','102Pd','103Rh','104Pd',
+                                  '105Pd','106Pd','108Pd','110Pd','190BCKG',
+                                  '191Ir','193Ir','80ArAr','131Xe_conta','140Ce_Beads',
+                                  '208Pb_Conta','127I_Conta','138Ba_Conta']
+
+                #The order does not matter (if you do not wish to drop markers, write: [])
     markers_to_drop_ = ['Ki67','H3K4me3','H3K27me3','H4','H3K27ac','H4K20me3','E3L','CD64','CD2', 'CD45RA', 'CD20']
-    
-   
-    
+
+
+
     UMAP_clusters(animals = ['CDF059','CDI003'],          # list of animal tags
-                  cells = 500000,                           # Downsample size for each timepoint
-                  neighbors = 10,                         # UMAP parameter
-                  metric = 'euclidean',                   # UMAP parameter
-                  min_sample = 20,                        # HDBSCAN parameter
-                  min_size = 0.00033,                       # HDBSCAN parameter
-                  panel = panel_,                         # declared above
-                  channels_to_drop = channels_to_drop_,   # declared above
-                  markers_to_drop = markers_to_drop_)     # declared above
-                  
-                 
+                    cells = 5000,                           # Downsample size for each timepoint
+                    neighbors = 10,                         # UMAP parameter
+                    metric = 'euclidean',                   # UMAP parameter
+                    min_sample = 20,                        # HDBSCAN parameter
+                    min_size = 0.01,                     # HDBSCAN parameter
+                    panel = panel_,                         # declared above
+                    channels_to_drop = channels_to_drop_,   # declared above
+                    markers_to_drop = markers_to_drop_)     # declared above
+
+
 
 
     finish = datetime.datetime.now()
@@ -663,10 +697,10 @@ try:
         mail.HTMLBody = 'The analysis ran for ' + str(delta.seconds/3600) + ' hours'
         mail.Send()
 
-
+"""
 except Exception as e:
 
-    
+
     for adress in ['martin.pezous@cea.fr', 'martin.pezous-puech@live.fr']:
 
         outlook = win32.Dispatch('Outlook.Application')
@@ -676,11 +710,11 @@ except Exception as e:
         mail.Body = ''
         mail.HTMLBody = 'An error occured during analysis:\n'+ str(e) 
         mail.Send()
-    
+"""    
  
 
 
-# In[ ]:
+
 
 
 
