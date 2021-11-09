@@ -34,56 +34,56 @@ import time
 import multiprocessing
 warnings.filterwarnings('ignore')
 
-
-def unimodal(dat):
-        
-    dat = list(dat)       
-    dat = np.msort(dat)
-    intervals = UniDip(dat, alpha=0.05).run()
-    if len(intervals) != 1:
-        
-        return False
-    else:
-        return True
-    
-    
-def spread(dat):
-    IQR = stat.iqr(dat)
-    if IQR < 200:
-        return True
-    else:
-        return False
-
-
-# In[6]:
 global good_mark
 good_mark = list()
 global bad_mark
 bad_mark = list()
 
-def QC_cond(marker, df, colonnes):
-    
+def chunks(lst, n):
+    for i in range(0, len(lst), n):
         
+        yield lst[i:i + n]
         
-    if (unimodal(df[:,marker])) & (spread(df[:,marker])):
-        good_mark.append(colonnes[marker])
-    else:
-        bad_mark.append(colonnes[marker])
 
-def QC(columns, df_group):
+def unimodal(array):
         
-    process_pool = multiprocessing.Pool(2)
+    #dat = list(dat)       
+    array = np.msort(array)
+    intervals = [UniDip(array[:,i], alpha=0.05).run() for i in range(0,array.shape[1])]
+    return np.array([False if len(interval) != 1 else True for interval in intervals])
+    
+    
+def spread(array):
+    IQR = stat.iqr(array, axis = 0)
+    return IQR < 200
+
+
+
+def QC_cond(chunk, df, colonnes):
+   
+    unimod = unimodal(df[:, chunk])
+    spd = spread(df[:, chunk])
+    condition = (unimod & spd)
+    good_mark.append([colonnes[chunk][condition]])
+    bad_mark.append([i for i in colonnes[chunk] if i not in good_mark])
+    
+    
+
+def QC(columns, df_group, cores):
+        
+    process_pool = multiprocessing.Pool(cores)
             
     args = []
-    for i in range(0,len(columns)):
-        args.append((i,df_group, columns))
+    for chunk in list(chunks(list(range(0, len(columns))), cores)):
+        args.append((chunk,df_group, columns))
             
     process_pool.starmap(QC_cond, args)
     process_pool.close()
     process_pool.join()
+
+
              
-                
-            
+                      
     
 
 def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size, panel, channels_to_drop, markers_to_drop):
@@ -479,11 +479,13 @@ def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size, panel
             
             
             
+            good_mark = list()
+            bad_mark = list()
             
+            QC(np.array(data.columns).astype('str'), df_group_8.to_numpy().astype('float64'), 6)
             
-            QC(np.array(data.columns).astype('str'), df_group_8.to_numpy().astype('float64'))
-            
-            good_markers, bad_markers = good_mark, bad_mark
+            good_markers = [j for i in good_mark for j in i]
+            bad_markers = [j for i in bad_mark for j in i]
             #good_markers, bad_markers = QC(data.columns, df_group_8)
             
             
@@ -640,75 +642,75 @@ def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size, panel
 import datetime
 import win32com.client as win32
 if __name__ == '__main__':
-    try:
-
-        start = datetime.datetime.now()                                             
-                                                                                                        #PART TO MODIFY
-    #========================================================================================================================================================================================================================================   
-    #========================================================================================================================================================================================================================================    
-
-        #The order must match the order found is the fcs file
-        panel_ = ['CD45','CD66','HLA-DR','CD3',
-                    'CD64','CD34','H3','CD123','CD101',
-                    'CD38','CD2','Ki67','CD10','CD117',
-                    'CX3CR1','E3L','CD172a','CD45RA',
-                    'CD14','Siglec1', 'CD1C','H4K20me3',
-                    'CD32','CLEC12A','CD90','H3K27ac','CD16',
-                   'CD11C','CD33','H4','CD115','BDCA2','CD49d+',
-                    'H3K27me3','H3K4me3','CADM1','CD20','CD8','CD11b']
-
-        #The order does not matter
-        channels_to_drop_ = ['Time','Event_length','Center','Offset','Width',
-                          'Residual','FileNum','102Pd','103Rh','104Pd',
-                          '105Pd','106Pd','108Pd','110Pd','190BCKG',
-                          '191Ir','193Ir','80ArAr','131Xe_conta','140Ce_Beads',
-                          '208Pb_Conta','127I_Conta','138Ba_Conta']
-
-        #The order does not matter (if you do not wish to drop markers, write: [])
-        markers_to_drop_ = ['Ki67','H3K4me3','H3K27me3','H4','H3K27ac','H4K20me3','E3L','CD64','CD2', 'CD45RA', 'CD20']
-
-
-
-        UMAP_clusters(animals = ['CDF059','CDI003'],          # list of animal tags
-                      cells = 5000,                           # Downsample size for each timepoint
-                      neighbors = 10,                         # UMAP parameter
-                      metric = 'euclidean',                   # UMAP parameter
-                      min_sample = 20,                        # HDBSCAN parameter
-                      min_size = 0.00033,                     # HDBSCAN parameter
-                      panel = panel_,                         # declared above
-                      channels_to_drop = channels_to_drop_,   # declared above
-                      markers_to_drop = markers_to_drop_)     # declared above
-
-
-
-
-        finish = datetime.datetime.now()
-        delta = datetime.timedelta(days = finish.day - start.day, hours=finish.hour-start.hour, minutes=finish.minute-start.minute, seconds = finish.second-start.second)
-
-        for adress in ['martin.pezous@cea.fr', 'martin.pezous-puech@live.fr']:
-
-            outlook = win32.Dispatch('Outlook.Application')
-            mail = outlook.CreateItem(0)
-            mail.To = adress
-            mail.Subject = 'Analysis: Done'
-            mail.Body = ''
-            mail.HTMLBody = 'The analysis ran for ' + str(delta.seconds/3600) + ' hours'
-            mail.Send()
-
-
-    except Exception as e:
-
-
-        for adress in ['martin.pezous@cea.fr', 'martin.pezous-puech@live.fr']:
-
-            outlook = win32.Dispatch('Outlook.Application')
-            mail = outlook.CreateItem(0)
-            mail.To = adress
-            mail.Subject = 'ERROR'
-            mail.Body = ''
-            mail.HTMLBody = 'An error occured during analysis:\n'+ str(e) 
-            mail.Send()
     
+
+    start = datetime.datetime.now()                                             
+                                                                                                                #PART TO MODIFY
+            #========================================================================================================================================================================================================================================   
+            #========================================================================================================================================================================================================================================    
+
+            #The order must match the order found is the fcs file
+    panel_ = ['CD45','CD66','HLA-DR','CD3',
+                            'CD64','CD34','H3','CD123','CD101',
+                            'CD38','CD2','Ki67','CD10','CD117',
+                            'CX3CR1','E3L','CD172a','CD45RA',
+                            'CD14','Siglec1', 'CD1C','H4K20me3',
+                            'CD32','CLEC12A','CD90','H3K27ac','CD16',
+                           'CD11C','CD33','H4','CD115','BDCA2','CD49d+',
+                            'H3K27me3','H3K4me3','CADM1','CD20','CD8','CD11b']
+
+                #The order does not matter
+    channels_to_drop_ = ['Time','Event_length','Center','Offset','Width',
+                                  'Residual','FileNum','102Pd','103Rh','104Pd',
+                                  '105Pd','106Pd','108Pd','110Pd','190BCKG',
+                                  '191Ir','193Ir','80ArAr','131Xe_conta','140Ce_Beads',
+                                  '208Pb_Conta','127I_Conta','138Ba_Conta']
+
+                #The order does not matter (if you do not wish to drop markers, write: [])
+    markers_to_drop_ = ['Ki67','H3K4me3','H3K27me3','H4','H3K27ac','H4K20me3','E3L','CD64','CD2', 'CD45RA', 'CD20']
+
+
+
+    UMAP_clusters(animals = ['CDF059','CDI003'],          # list of animal tags
+                    cells = 5000,                           # Downsample size for each timepoint
+                    neighbors = 10,                         # UMAP parameter
+                    metric = 'euclidean',                   # UMAP parameter
+                    min_sample = 20,                        # HDBSCAN parameter
+                    min_size = 0.01,                     # HDBSCAN parameter
+                    panel = panel_,                         # declared above
+                    channels_to_drop = channels_to_drop_,   # declared above
+                    markers_to_drop = markers_to_drop_)     # declared above
+
+
+
+
+    finish = datetime.datetime.now()
+    delta = datetime.timedelta(days = finish.day - start.day, hours=finish.hour-start.hour, minutes=finish.minute-start.minute, seconds = finish.second-start.second)
+
+    for adress in ['martin.pezous@cea.fr', 'martin.pezous-puech@live.fr']:
+
+        outlook = win32.Dispatch('Outlook.Application')
+        mail = outlook.CreateItem(0)
+        mail.To = adress
+        mail.Subject = 'Analysis: Done'
+        mail.Body = ''
+        mail.HTMLBody = 'The analysis ran for ' + str(delta.seconds/3600) + ' hours'
+        mail.Send()
+
+"""
+except Exception as e:
+
+
+    for adress in ['martin.pezous@cea.fr', 'martin.pezous-puech@live.fr']:
+
+        outlook = win32.Dispatch('Outlook.Application')
+        mail = outlook.CreateItem(0)
+        mail.To = adress
+        mail.Subject = 'ERROR'
+        mail.Body = ''
+        mail.HTMLBody = 'An error occured during analysis:\n'+ str(e) 
+        mail.Send()
+"""    
  
 
 
