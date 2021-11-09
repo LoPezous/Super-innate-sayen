@@ -72,7 +72,7 @@ def QC_cond(marker, df, colonnes):
 
 def QC(columns, df_group):
         
-    process_pool = multiprocessing.Pool(6)
+    process_pool = multiprocessing.Pool(2)
             
     args = []
     for i in range(0,len(columns)):
@@ -578,10 +578,13 @@ def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size, panel
         clusters_BL = pd.DataFrame(labels_1[subset_BL,])
         clustersizes_BL = []
         clusters = []
-        for i in np.unique(clusters_BL[0]):
+        for i in np.unique(labels_1):
+            if i in clusters_BL.values:
 
-            clustersizes_BL.append(np.shape(clusters_BL[clusters_BL[0]==i])[0])
-            clusters.append(i)
+                clustersizes_BL.append(np.shape(clusters_BL[clusters_BL[0]==i])[0])
+                clusters.append(i)
+            else:
+                clustersizes_BL.append(0)
         
         cluster_sizes = pd.DataFrame(clustersizes_BL)
         cluster_sizes.columns = ['BL']
@@ -592,7 +595,7 @@ def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size, panel
             clusters_D28 = pd.DataFrame(labels_1[subsets[subset_D28],])
             
             clustersizes_D28 = []
-            for i in np.unique(clusters_D28[0]):
+            for i in np.unique(labels_1):
                 if i in clusters_D28.values:
                     clustersizes_D28.append(np.shape(clusters_D28[clusters_D28[0]==i])[0])#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                     
@@ -671,7 +674,7 @@ if __name__ == '__main__':
                       neighbors = 10,                         # UMAP parameter
                       metric = 'euclidean',                   # UMAP parameter
                       min_sample = 20,                        # HDBSCAN parameter
-                      min_size = 0.00033,                       # HDBSCAN parameter
+                      min_size = 0.00033,                     # HDBSCAN parameter
                       panel = panel_,                         # declared above
                       channels_to_drop = channels_to_drop_,   # declared above
                       markers_to_drop = markers_to_drop_)     # declared above
