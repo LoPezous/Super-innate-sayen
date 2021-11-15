@@ -264,6 +264,7 @@ def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size, panel
     
     
     data = np.arcsinh(data)
+    print(len(data), 'cells')
     #data = (data-data.min())/(data.max()-data.min()) #MINMAX NORMED
                              #FLOAT 323 !!!
     #WHOLE DATA ANALYSIS
@@ -438,9 +439,43 @@ def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size, panel
             
             #print(str(int((t/len(data.columns))*100)) + ' %', end='\r')
             print(str(int(t/len(np.unique(labels_1))*100)) + ' %' + '|' + '█'*t + ' '*(len(np.unique(labels_1))-u) + '|', end='\r')
+            
+            #MAIL PROGRESS ALERTS
+            if int(t/len(np.unique(labels_1))*100) > 24 and int(t/len(np.unique(labels_1))*100) < 31:
+                for adress in ['martin.pezous@cea.fr', 'martin.pezous-puech@live.fr']:
+
+                    outlook = win32.Dispatch('Outlook.Application')
+                    mail = outlook.CreateItem(0)
+                    mail.To = adress
+                    mail.Subject = 'Progress'
+                    mail.Body = ''
+                    mail.HTMLBody = '25 % of the clusters have been analysed'
+                    mail.Send()
+            
+            elif int(t/len(np.unique(labels_1))*100) > 49 and int(t/len(np.unique(labels_1))*100) < 56:
+                for adress in ['martin.pezous@cea.fr', 'martin.pezous-puech@live.fr']:
+
+                    outlook = win32.Dispatch('Outlook.Application')
+                    mail = outlook.CreateItem(0)
+                    mail.To = adress
+                    mail.Subject = 'Progress'
+                    mail.Body = ''
+                    mail.HTMLBody = '50 % of the clusters have been analysed'
+                    mail.Send()
+            
+            elif int(t/len(np.unique(labels_1))*100) > 74 and int(t/len(np.unique(labels_1))*100) < 81:
+                for adress in ['martin.pezous@cea.fr', 'martin.pezous-puech@live.fr']:
+
+                    outlook = win32.Dispatch('Outlook.Application')
+                    mail = outlook.CreateItem(0)
+                    mail.To = adress
+                    mail.Subject = 'Progress'
+                    mail.Body = ''
+                    mail.HTMLBody = '75 % of the clusters have been analysed'
+                    mail.Send()
             t+=1
             u+=1
-            
+
             #QC
 
             eight = (labels_1 == i)
@@ -564,10 +599,12 @@ def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size, panel
                 clusters.append(i)
             else:
                 clustersizes_BL.append(0)
-        
-        cluster_sizes = pd.DataFrame(clustersizes_BL)
-        cluster_sizes.columns = ['BL']
-        cluster_sizes['clusters'] = clusters
+        global cluster_sizes
+        cluster_sizes = pd.DataFrame(clusters)
+        #cluster_sizes = pd.DataFrame(clustersizes_BL)
+        cluster_sizes.columns = ['clusters']
+        clustersizes_BL = pd.Series(clustersizes_BL)
+        cluster_sizes['BL'] = clustersizes_BL
 
         for subset_D28, match in zip(subsets, matches):
             
@@ -582,11 +619,18 @@ def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size, panel
                     clustersizes_D28.append(0)
                     
                     
-            
+            """
             match = match.replace('_','')
-            clustersizes_D28 = pd.DataFrame(clustersizes_D28)
+            clustersizes_D28 = pd.series(clustersizes_D28)
             clustersizes_D28.set_axis([match], axis=1, inplace=True)
             cluster_sizes = pd.concat([cluster_sizes, clustersizes_D28], axis = 1)
+            cluster_sizes = cluster_sizes.fillna(0)
+            """
+            
+            match = match.replace('_','')
+            clustersizes_D28 = pd.Series(clustersizes_D28)
+            #clustersizes_D28.set_axis([match], axis=1, inplace=True)
+            cluster_sizes[match] = clustersizes_D28
             cluster_sizes = cluster_sizes.fillna(0)
                 
             
@@ -627,80 +671,73 @@ import datetime
 import win32com.client as win32
 
 if __name__ == '__main__':
+    
+    try:
 
+        start = datetime.datetime.now()                                             
+                                                                                                                        #PART TO MODIFY
+                    #========================================================================================================================================================================================================================================   
+                    #========================================================================================================================================================================================================================================    
 
-    start = datetime.datetime.now()                                             
-                                                                                                                    #PART TO MODIFY
-                #========================================================================================================================================================================================================================================   
-                #========================================================================================================================================================================================================================================    
+                    #The order must match the order found is the fcs file
+        panel_ = ['CD45','CD66','HLA-DR','CD3',
+                                    'CD64','CD34','H3','CD123','CD101',
+                                    'CD38','CD2','Ki67','CD10','CD117',
+                                    'CX3CR1','E3L','CD172a','CD45RA',
+                                    'CD14','Siglec1', 'CD1C','H4K20me3',
+                                    'CD32','CLEC12A','CD90','H3K27ac','CD16',
+                                   'CD11C','CD33','H4','CD115','BDCA2','CD49d+',
+                                    'H3K27me3','H3K4me3','CADM1','CD20','CD8','CD11b']
 
-                #The order must match the order found is the fcs file
-    panel_ = ['CD45','CD66','HLA-DR','CD3',
-                                'CD64','CD34','H3','CD123','CD101',
-                                'CD38','CD2','Ki67','CD10','CD117',
-                                'CX3CR1','E3L','CD172a','CD45RA',
-                                'CD14','Siglec1', 'CD1C','H4K20me3',
-                                'CD32','CLEC12A','CD90','H3K27ac','CD16',
-                               'CD11C','CD33','H4','CD115','BDCA2','CD49d+',
-                                'H3K27me3','H3K4me3','CADM1','CD20','CD8','CD11b']
+                        #The order does not matter
+        channels_to_drop_ = ['Time','Event_length','Center','Offset','Width',
+                                          'Residual','FileNum','102Pd','103Rh','104Pd',
+                                          '105Pd','106Pd','108Pd','110Pd','190BCKG',
+                                          '191Ir','193Ir','80ArAr','131Xe_conta','140Ce_Beads',
+                                          '208Pb_Conta','127I_Conta','138Ba_Conta']
 
-                    #The order does not matter
-    channels_to_drop_ = ['Time','Event_length','Center','Offset','Width',
-                                      'Residual','FileNum','102Pd','103Rh','104Pd',
-                                      '105Pd','106Pd','108Pd','110Pd','190BCKG',
-                                      '191Ir','193Ir','80ArAr','131Xe_conta','140Ce_Beads',
-                                      '208Pb_Conta','127I_Conta','138Ba_Conta']
-
-                    #The order does not matter (if you do not wish to drop markers, write: [])
-    markers_to_drop_ = ['Ki67','H3K4me3','H3K27me3','H4','H3K27ac','H4K20me3','E3L','CD64','CD2', 'CD45RA', 'CD20']
-
-
-
-    UMAP_clusters(animals = ['CDF059','CDI003'],          # list of animal tags
-                    cells = 5000,                           # Downsample size for each timepoint
-                    neighbors = 10,                         # UMAP parameter
-                    metric = 'euclidean',                   # UMAP parameter
-                    min_sample = 20,                        # HDBSCAN parameter
-                    min_size = 0.00033,                     # HDBSCAN parameter
-                    panel = panel_,                         # declared above
-                    channels_to_drop = channels_to_drop_,   # declared above
-                    markers_to_drop = markers_to_drop_)     # declared above
+                        #The order does not matter (if you do not wish to drop markers, write: [])
+        markers_to_drop_ = ['Ki67','H3K4me3','H3K27me3','H4','H3K27ac','H4K20me3','E3L','CD64','CD2', 'CD45RA', 'CD20']
 
 
 
-
-    finish = datetime.datetime.now()
-    delta = datetime.timedelta(days = finish.day - start.day, hours=finish.hour-start.hour, minutes=finish.minute-start.minute, seconds = finish.second-start.second)
-
-    for adress in ['martin.pezous@cea.fr', 'martin.pezous-puech@live.fr']:
-
-        outlook = win32.Dispatch('Outlook.Application')
-        mail = outlook.CreateItem(0)
-        mail.To = adress
-        mail.Subject = 'Analysis: Done'
-        mail.Body = ''
-        mail.HTMLBody = 'The analysis ran for ' + str(delta.seconds/3600) + ' hours'
-        mail.Send()
-
-"""
-except Exception as e:
-
-
-    for adress in ['martin.pezous@cea.fr', 'martin.pezous-puech@live.fr']:
-
-        outlook = win32.Dispatch('Outlook.Application')
-        mail = outlook.CreateItem(0)
-        mail.To = adress
-        mail.Subject = 'ERROR'
-        mail.Body = ''
-        mail.HTMLBody = 'An error occured during analysis:\n'+ str(e) 
-        mail.Send()
-"""  
- 
+        UMAP_clusters(animals = ['CDF059','CDI003'],          # list of animal tags
+                        cells = 1000,                           # Downsample size for each timepoint
+                        neighbors = 10,                         # UMAP parameter
+                        metric = 'euclidean',                   # UMAP parameter
+                        min_sample = 20,                        # HDBSCAN parameter
+                        min_size = 0.001,                     # HDBSCAN parameter
+                        panel = panel_,                         # declared above
+                        channels_to_drop = channels_to_drop_,   # declared above
+                        markers_to_drop = markers_to_drop_)     # declared above
 
 
 
 
+        finish = datetime.datetime.now()
+        delta = datetime.timedelta(days = finish.day - start.day, hours=finish.hour-start.hour, minutes=finish.minute-start.minute, seconds = finish.second-start.second)
+
+        for adress in ['martin.pezous@cea.fr', 'martin.pezous-puech@live.fr']:
+
+            outlook = win32.Dispatch('Outlook.Application')
+            mail = outlook.CreateItem(0)
+            mail.To = adress
+            mail.Subject = 'Analysis: Done'
+            mail.Body = ''
+            mail.HTMLBody = 'The analysis ran for ' + str(delta.seconds/3600) + ' hours'
+            mail.Send()
 
 
+    except Exception as e:
 
+
+        for adress in ['martin.pezous@cea.fr', 'martin.pezous-puech@live.fr']:
+
+            outlook = win32.Dispatch('Outlook.Application')
+            mail = outlook.CreateItem(0)
+            mail.To = adress
+            mail.Subject = 'ERROR'
+            mail.Body = ''
+            mail.HTMLBody = 'An error occured during analysis:\n'+ str(e) 
+            mail.Send()
+            
