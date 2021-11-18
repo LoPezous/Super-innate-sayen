@@ -10,6 +10,7 @@ import FlowCytometryTools
 import numpy as np
 from sklearn.preprocessing import StandardScaler
 import matplotlib.pyplot as plt
+#import proplot as pplt
 import seaborn as sns
 import pandas as pd
 import os
@@ -296,7 +297,7 @@ def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size, panel
         min_samples= min_sample,
         min_cluster_size= int(min_size*len(data)),
         core_dist_n_jobs=1
-    ).fit_predict(data)
+    ).fit_predict(clusterable_embedding_1)
     
     
     
@@ -438,12 +439,19 @@ def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size, panel
                 
             bounds = np.array([back_up[str(x)].min(), 
                               back_up[str(x)].quantile(.05)+0.01, 
-                              back_up[str(x)].quantile(.35)+0.01,
-                              back_up[str(x)].quantile(.65)+0.01, 
-                              back_up[str(x)].quantile(.95)+0.01, 
+                              back_up[str(x)].quantile(.35)+0.011,
+                              back_up[str(x)].quantile(.65)+0.0111, 
+                              back_up[str(x)].quantile(.95)+0.01111, 
+                              back_up[str(x)].max()])
+            
+            ticks = np.array([back_up[str(x)].min(), 
+                              back_up[str(x)].quantile(.05), 
+                              back_up[str(x)].quantile(.35),
+                              back_up[str(x)].quantile(.65), 
+                              back_up[str(x)].quantile(.95), 
                               back_up[str(x)].max()])
             #bounds = np.linspace(1,5,10,100)
-                
+            #norm = pplt.DiscreteNorm(bounds, norm=None, unique=None, step=None, clip=True)   
             norm = colors.BoundaryNorm(boundaries=bounds, ncolors=256)
 
             plt.scatter(clusterable_embedding_1[:,0],
@@ -455,7 +463,8 @@ def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size, panel
             #plt.clim(vmin = 0.1, vmax = back_up[clustered][str(x)].max())
             
             
-            plt.colorbar()
+            cb = plt.colorbar()
+            cb.set_ticklabels(ticks)
                 
                 
                 
