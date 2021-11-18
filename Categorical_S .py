@@ -398,15 +398,15 @@ def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size, panel
 
                 clustered = (labels_1 == cluster)
                 
-                bounds = np.array([back_up[clustered][str(x)].quantile(0), 
-                                  back_up[clustered][str(x)].quantile(.23),
-                                  back_up[clustered][str(x)].quantile(.41), 
-                                  back_up[clustered][str(x)].quantile(.59),
-                                  back_up[clustered][str(x)].quantile(.77),
-                                  back_up[clustered][str(x)].quantile(1)])
+                bounds = np.array([back_up[clustered][str(x)].min(), 
+                                  back_up[clustered][str(x)].quantile(.05), 
+                                  back_up[clustered][str(x)].quantile(.35),
+                                  back_up[clustered][str(x)].quantile(.65), 
+                                  back_up[clustered][str(x)].quantile(.95), 
+                                  back_up[clustered][str(x)].max()])
                 #bounds = np.linspace(1,5,10,100)
                 
-                norm = colors.BoundaryNorm(boundaries=bounds, ncolors=256, clip = True)
+                norm = colors.BoundaryNorm(boundaries=bounds, ncolors=256)
 
                 plt.scatter(clusterable_embedding_1[clustered][:,0],
                             clusterable_embedding_1[clustered][:,1],
@@ -415,9 +415,7 @@ def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size, panel
                             cmap='jet', norm= norm)
                 #plt.clim(1,1000)
                 #plt.clim(vmin = 0.1, vmax = back_up[clustered][str(x)].max())
-            cbar = plt.colorbar()
-            cbar.set_ticks(bounds)
-            #cbar.set_ticklabels([str(bounds[0])+ ': 0th', str(bounds[1])+ ': 23rd', str(bounds[2])+ ': 41st', str(bounds[3])+ ': 59th', str(bounds[4])+ ': 77th', str(bounds[5])+ ': 100th'])
+            plt.colorbar()
                 
                 
                 
@@ -724,7 +722,7 @@ try:
                             cells = 500_000,                           # Downsample size for each timepoint
                             neighbors = 10,                         # UMAP parameter
                             metric = 'euclidean',                   # UMAP parameter
-                            min_sample = 1,                        # HDBSCAN parameter
+                            min_sample = 15,                        # HDBSCAN parameter
                             min_size = 0.00033,                     # HDBSCAN parameter
                             panel = panel_,                         # declared above
                             channels_to_drop = channels_to_drop_,   # declared above
