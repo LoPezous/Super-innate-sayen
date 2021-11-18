@@ -373,6 +373,78 @@ def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size, panel
                 
             plt.savefig(r'UMAP/' + str(timepoint) + '.png', bbox_inches='tight', dpi=300)
             plt.close()
+            
+            fig, ax = plt.subplots(figsize = (15,15))
+            
+            for cluster in np.unique(labels_1):
+                
+                
+
+
+                
+
+                clustered = (labels_1 == cluster) #cluster condition boolean list 
+                other = (labels_1 != cluster)
+                both = (tmp & clustered)
+                both_2 = (tmp & other)
+
+                
+
+                ax.scatter(clusterable_embedding_1[both][:,0],
+                        clusterable_embedding_1[both][:,1],
+                        s=0.1,
+                        color = 'red')
+                
+                ax.scatter(clusterable_embedding_1[both_2][:,0],
+                        clusterable_embedding_1[both_2][:,1],
+                        s=0.1,
+                        color = 'white')
+                
+                    
+                ax.patch.set_facecolor('black')
+
+
+                
+
+                
+                plt.savefig(r'UMAP/highlight_' + str(cluster) + '_' + str(timepoint) + '.png', bbox_inches='tight', dpi=300)
+                plt.close()
+                
+                for cluster in np.unique(labels_1):
+                
+                
+
+                    fig, ax = plt.subplots(figsize = (15,15))
+                    
+
+                    clustered = (labels_1 == cluster) #cluster condition boolean list 
+                    other = (labels_1 != cluster)
+                    both = (tmp & clustered)
+                    both_2 = (tmp & other)
+
+                    
+
+                    ax.scatter(clusterable_embedding_1[both][:,0],
+                            clusterable_embedding_1[both][:,1],
+                            s=0.1,
+                            label = cluster,
+                            color = 'red')
+                    
+                    ax.scatter(clusterable_embedding_1[both_2][:,0],
+                            clusterable_embedding_1[both_2][:,1],
+                            s=0.1,
+                            label = 'other clusters',
+                            color = 'white')
+                    
+                        
+                    ax.patch.set_facecolor('black')
+
+
+                    
+
+                    plt.legend(bbox_to_anchor=(1.04,1), loc="upper left", markerscale = 15.0, ncol = 3)
+                    plt.savefig(r'UMAP/highlight_' + str(cluster) + '_' + str(timepoint) + '.png', bbox_inches='tight', dpi=300)
+                    plt.close()
 
 
         #UMAP markers

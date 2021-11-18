@@ -373,6 +373,44 @@ def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size, panel
                 
             plt.savefig(r'UMAP/' + str(timepoint) + '.png', bbox_inches='tight', dpi=300)
             plt.close()
+            
+            
+            
+            for cluster in np.unique(labels_1):
+                
+                
+
+                fig, ax = plt.subplots(figsize = (15,15))
+                
+
+                clustered = (labels_1 == cluster) #cluster condition boolean list 
+                other = (labels_1 != cluster)
+                both = (tmp & clustered)
+                both_2 = (tmp & other)
+
+                
+
+                ax.scatter(clusterable_embedding_1[both][:,0],
+                        clusterable_embedding_1[both][:,1],
+                        s=0.1,
+                        label = cluster,
+                        color = 'red')
+                
+                ax.scatter(clusterable_embedding_1[both_2][:,0],
+                        clusterable_embedding_1[both_2][:,1],
+                        s=0.1,
+                        label = 'other clusters',
+                        color = 'white')
+                
+                    
+                ax.patch.set_facecolor('black')
+
+
+                
+
+                plt.legend(bbox_to_anchor=(1.04,1), loc="upper left", markerscale = 15.0, ncol = 3)
+                plt.savefig(r'UMAP/highlight_' + str(cluster) + '_' + str(timepoint) + '.png', bbox_inches='tight', dpi=300)
+                plt.close()
 
 
         #UMAP markers
@@ -393,28 +431,30 @@ def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size, panel
                 
             fig, ax = plt.subplots(figsize = (12,12))
                 
-            for cluster in np.unique(labels_1):
+            #for cluster in np.unique(labels_1):
                     
 
-                clustered = (labels_1 == cluster)
+            #clustered = (labels_1 == cluster)
                 
-                bounds = np.array([back_up[clustered][str(x)].min(), 
-                                  back_up[clustered][str(x)].quantile(.05), 
-                                  back_up[clustered][str(x)].quantile(.35),
-                                  back_up[clustered][str(x)].quantile(.65), 
-                                  back_up[clustered][str(x)].quantile(.95), 
-                                  back_up[clustered][str(x)].max()])
-                #bounds = np.linspace(1,5,10,100)
+            bounds = np.array([back_up[str(x)].min(), 
+                              back_up[str(x)].quantile(.05)+0.01, 
+                              back_up[str(x)].quantile(.35)+0.01,
+                              back_up[str(x)].quantile(.65)+0.01, 
+                              back_up[str(x)].quantile(.95)+0.01, 
+                              back_up[str(x)].max()])
+            #bounds = np.linspace(1,5,10,100)
                 
-                norm = colors.BoundaryNorm(boundaries=bounds, ncolors=256)
+            norm = colors.BoundaryNorm(boundaries=bounds, ncolors=256)
 
-                plt.scatter(clusterable_embedding_1[clustered][:,0],
-                            clusterable_embedding_1[clustered][:,1],
-                            s=0.1,
-                            c = back_up[clustered][str(x)],
-                            cmap='jet', norm= norm)
-                #plt.clim(1,1000)
-                #plt.clim(vmin = 0.1, vmax = back_up[clustered][str(x)].max())
+            plt.scatter(clusterable_embedding_1[:,0],
+                        clusterable_embedding_1[:,1],
+                        s=0.1,
+                        c = back_up[str(x)],
+                        cmap='jet', norm= norm)
+            #plt.clim(1,1000)
+            #plt.clim(vmin = 0.1, vmax = back_up[clustered][str(x)].max())
+            
+            
             plt.colorbar()
                 
                 
@@ -719,11 +759,11 @@ try:
 
 
     UMAP_clusters(animals = ['CDF059','CDI003'],          # list of animal tags
-                            cells = 500_000,                           # Downsample size for each timepoint
+                            cells = 500,                           # Downsample size for each timepoint
                             neighbors = 10,                         # UMAP parameter
                             metric = 'euclidean',                   # UMAP parameter
                             min_sample = 15,                        # HDBSCAN parameter
-                            min_size = 0.00033,                     # HDBSCAN parameter
+                            min_size = 0.02,                     # HDBSCAN parameter
                             panel = panel_,                         # declared above
                             channels_to_drop = channels_to_drop_,   # declared above
                             markers_to_drop = markers_to_drop_)     # declared above
