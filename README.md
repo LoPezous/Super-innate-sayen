@@ -10,14 +10,14 @@ The scripts provide:
 Different approaches can be used:
 
 ## Reducing the dimensionality of the data before clustering on 2 dimensions. 
-NOTE: reducing the dimensionality before clustering induces a loss of information and might diminish the efficiency and precision of the clustering.
+NOTE: This approach should be used on smaller datasets.
 * using ***Serial.py***
 
 ![image](https://user-images.githubusercontent.com/66411147/137888387-30fc2a02-c250-4d10-9d19-76459a2be03f.png)
 
 
 ## Clustering on a high dimensional dataset and using dimensionality reduction for visualization purposes.
-NOTE: Without reducing the dimensonality of the data before clustering, HDBSCAN might not be able to detect fine overdensities, this is why this approach should be used on large datasets 
+NOTE: This approach should be used on larger datasets .
 * using ***parallel.py***
 
 ![image](https://user-images.githubusercontent.com/66411147/137888441-6d5ba92e-5604-4203-add8-e9fdeb71ed63.png)
@@ -33,14 +33,13 @@ NOTE: Without reducing the dimensonality of the data before clustering, HDBSCAN 
 
 ### Cluster visualization
 
-![image](https://user-images.githubusercontent.com/66411147/137884030-9ee6f83d-b440-485e-bfa1-92d58392adda.png)
+![D28](https://user-images.githubusercontent.com/66411147/143853892-cb4d2173-afbe-4f59-9f33-1c9404c487f0.png)
 
-clusters were established both on epigenetic and phenotipic dimensions
-Such outputs are generated for each timepoints
+Such outputs are generated for each timepoint
 
 ### Cell population identification
 
-![image](https://user-images.githubusercontent.com/66411147/137884190-304e7faf-ea32-435c-9764-05def11cf8c6.png)
+![image](https://user-images.githubusercontent.com/66411147/143854342-07b24d79-b758-4fed-ada2-4b2aca375c25.png)
 
 Allows manual identification of cell populations
 
