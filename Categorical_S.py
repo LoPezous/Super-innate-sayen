@@ -40,7 +40,7 @@ import time
 import warnings
 import matplotlib.colors as colors
 warnings.filterwarnings("ignore")
-
+sys.setrecursionlimit(3000)
 class marks:
 
     good_mark = list()
@@ -51,7 +51,10 @@ def unimodal(array):
         
     #dat = list(dat)       
     array = np.msort(array)
-    intervals = [UniDip(array[:,i], alpha=0.05).run() for i in range(0,array.shape[1])]
+    intervals = []
+    for i in range(0,array.shape[1]):
+        intervals.append(UniDip(array[:,i], alpha=0.05, ntrials=1).run())
+    
     return np.array([False if len(interval) != 1 else True for interval in intervals])
     
     
@@ -507,38 +510,7 @@ def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size, panel
             print(str(int(t/len(np.unique(labels_1))*100)) + ' %' + '|' + '█'*t + ' '*(len(np.unique(labels_1))-u) + '|', end='\r')
             
             #MAIL PROGRESS ALERTS
-            if int(t/len(np.unique(labels_1))*100) > 24 and int(t/len(np.unique(labels_1))*100) < 31:
-                for adress in ['martin.pezous@cea.fr', 'martin.pezous-puech@live.fr']:
-
-                    outlook = win32.Dispatch('Outlook.Application')
-                    mail = outlook.CreateItem(0)
-                    mail.To = adress
-                    mail.Subject = 'Progress'
-                    mail.Body = ''
-                    mail.HTMLBody = '25 % of the clusters have been analysed'
-                    mail.Send()
             
-            elif int(t/len(np.unique(labels_1))*100) > 49 and int(t/len(np.unique(labels_1))*100) < 56:
-                for adress in ['martin.pezous@cea.fr', 'martin.pezous-puech@live.fr']:
-
-                    outlook = win32.Dispatch('Outlook.Application')
-                    mail = outlook.CreateItem(0)
-                    mail.To = adress
-                    mail.Subject = 'Progress'
-                    mail.Body = ''
-                    mail.HTMLBody = '50 % of the clusters have been analysed'
-                    mail.Send()
-            
-            elif int(t/len(np.unique(labels_1))*100) > 74 and int(t/len(np.unique(labels_1))*100) < 81:
-                for adress in ['martin.pezous@cea.fr', 'martin.pezous-puech@live.fr']:
-
-                    outlook = win32.Dispatch('Outlook.Application')
-                    mail = outlook.CreateItem(0)
-                    mail.To = adress
-                    mail.Subject = 'Progress'
-                    mail.Body = ''
-                    mail.HTMLBody = '75 % of the clusters have been analysed'
-                    mail.Send()
             t+=1
             u+=1
 
@@ -707,7 +679,7 @@ def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size, panel
         
         figure(figsize=(15, 10))
         width = 0.3
-        plt.bar(cluster_sizes['clusters'], cluster_sizes['BL'],width, color = 'b', alpha = 0.7, label = 'Baseline')
+        plt.bar(cluster_sizes['clusters'], cluster_sizes['BL'],width, color = 'b', alpha = 0.7, label = 'Baseline', log = True)
         for match in matches:
             match = match.replace('_','')
             plt.bar(cluster_sizes['clusters']+width, cluster_sizes[str(match)],width, color = 'g', alpha = 0.7, label = str(match))
@@ -768,11 +740,11 @@ try:
 
 
     UMAP_clusters(animals = ['CDF059','CDI003'],          # list of animal tags
-                            cells = 500,                           # Downsample size for each timepoint
+                            cells = 600_000,                           # Downsample size for each timepoint
                             neighbors = 10,                         # UMAP parameter
                             metric = 'euclidean',                   # UMAP parameter
-                            min_sample = 15,                        # HDBSCAN parameter
-                            min_size = 0.02,                     # HDBSCAN parameter
+                            min_sample = 5,                        # HDBSCAN parameter
+                            min_size = 0.00020,                     # HDBSCAN parameter
                             panel = panel_,                         # declared above
                             channels_to_drop = channels_to_drop_,   # declared above
                             markers_to_drop = markers_to_drop_)     # declared above
@@ -808,13 +780,7 @@ except Exception as e:
         mail.Send()
 
 
-# In[20]:
 
-
-cluster_sizes
-
-
-# In[ ]:
 
 
 
