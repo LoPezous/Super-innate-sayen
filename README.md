@@ -1,4 +1,5 @@
-# Cytof deep phenotyping and exploration of trained immunity mechanisms
+# Cytof deep phenotyping using dimensionality reduction and density-based clustering
+# Overview
 These scripts intend to provide a way to efficiently analyse high dimensional mass cytometry data.
 The essence of the project is to combine dimentionality reduction (using UMAP) and density-based clustering (using HDBSCAN). 
 The scripts provide:
@@ -33,17 +34,17 @@ NOTE: This approach should be used on larger datasets .
 
 ### Cluster visualization
 
-![D28](https://user-images.githubusercontent.com/66411147/143853892-cb4d2173-afbe-4f59-9f33-1c9404c487f0.png)
+![D28](https://user-images.githubusercontent.com/66411147/144065154-8708517f-521d-4b5e-922b-faf74a599ec7.png)
 
 Such outputs are generated for each timepoint
 
 ### Cell population identification
 
-![image](https://user-images.githubusercontent.com/66411147/143854342-07b24d79-b758-4fed-ada2-4b2aca375c25.png)
+![image](https://user-images.githubusercontent.com/66411147/144065851-8c9566e3-4896-4f6f-81c6-163ea755881b.png)
 
 Allows manual identification of cell populations
 
-### Evolution of clustert sizes along timeline
+### Evolution of cluster sizes along timepoints
 
 ![image](https://user-images.githubusercontent.com/66411147/137884285-32f91434-9e85-40d5-ac41-b4c94151f49d.png)
 
@@ -58,8 +59,8 @@ All timepoints were clustered together. Their sizes vary with timepoints.
 Such outputs are generated for each cluster
 
 
-## Installation and usage
-### installation
+# Installation and usage
+## installation
 1. Download miniconda:   
 Windows 64-bit --> https://repo.anaconda.com/miniconda/Miniconda3-latest-Windows-x86_64.exe  
 Windows 32-bit --> https://repo.anaconda.com/miniconda/Miniconda3-latest-Windows-x86.exe
@@ -67,12 +68,13 @@ Windows 32-bit --> https://repo.anaconda.com/miniconda/Miniconda3-latest-Windows
 3. Install the dependencies:  
 In the miniconda prompt, type: **pip install -r *path*/requirements.txt**  
 (replace ***path*** by the path to the folder where you downloaded the repository)
-### usage
+## usage
 1. Store your .fcs files in a folder named **files** inside the main folder
 2. The files' names must contain some tags:  
 BL for baseline timepoint  
 DXX for other timepoints (replace XX by the number of days)  
-The animal names 
+The animal tag  
+file name example: *D28_CDF059_pet_et_répète_sont_dans_un_bateau.fcs*
 4. Modify the script:
 ![image](https://user-images.githubusercontent.com/66411147/144062796-da6078d3-69cc-4d09-8869-6c12a55b0d6d.png)  
   
@@ -84,7 +86,7 @@ The animal names
   
 **animals**: the animal tags you provided in the filenames  
   
-**cells**: the number of cells you wish to analyze per timepoint  
+**cells**: downsample size for each timepoint  
   
 **neighbor**: UMAP parameter  
   
