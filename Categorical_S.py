@@ -686,10 +686,12 @@ def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size, panel
         plt.bar(cluster_sizes['clusters'], cluster_sizes['BL'],width, color = 'b', alpha = 0.6, label = 'Baseline', log = True)
         tmp_colors = ['g','r','purple','yellow','black']
         iterador = 0
+        largeur = 1
         for match in matches:
             match = match.replace('_','')
-            plt.bar(cluster_sizes['clusters']+width, cluster_sizes[str(match)],width, color = tmp_colors[iterador], alpha = 0.6, label = str(match))
-            iterador +=1   
+            plt.bar(cluster_sizes['clusters']+width*largeur, cluster_sizes[str(match)],width, color = tmp_colors[iterador], alpha = 0.6, label = str(match))
+            iterador +=1
+            largeur += 1
         #plt.yscale("log")
 
 
