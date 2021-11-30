@@ -683,10 +683,13 @@ def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size, panel
         
         figure(figsize=(15, 10))
         width = 0.3
-        plt.bar(cluster_sizes['clusters'], cluster_sizes['BL'],width, color = 'b', alpha = 0.7, label = 'Baseline', log = True)
+        plt.bar(cluster_sizes['clusters'], cluster_sizes['BL'],width, color = 'b', alpha = 0.6, label = 'Baseline', log = True)
+        tmp_colors = ['g','r','purple','yellow','black']
+        iterador = 0
         for match in matches:
             match = match.replace('_','')
-            plt.bar(cluster_sizes['clusters']+width, cluster_sizes[str(match)],width, color = 'g', alpha = 0.7, label = str(match))
+            plt.bar(cluster_sizes['clusters']+width, cluster_sizes[str(match)],width, color = tmp_colors[iterador], alpha = 0.6, label = str(match))
+            iterador +=1   
         #plt.yscale("log")
 
 
@@ -744,11 +747,11 @@ try:
 
 
     UMAP_clusters(animals = ['CDF059','CDI003'],          # list of animal tags
-                            cells = 1_300_000,                           # Downsample size for each timepoint
+                            cells = 500,                           # Downsample size for each timepoint
                             neighbors = 10,                         # UMAP parameter
                             metric = 'euclidean',                   # UMAP parameter
-                            min_sample = 1,                        # HDBSCAN parameter
-                            min_size = 0.00033,                     # HDBSCAN parameter
+                            min_sample = 20,                        # HDBSCAN parameter
+                            min_size = 0.033,                     # HDBSCAN parameter
                             panel = panel_,                         # declared above
                             channels_to_drop = channels_to_drop_,   # declared above
                             markers_to_drop = markers_to_drop_)     # declared above
