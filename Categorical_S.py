@@ -127,11 +127,12 @@ def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size, panel
     for file in files:
         if re.match('BL', file):
             baseline_files.append(file)
-        
+    
                 
     
     sample_BL = FCMeasurement(ID='Test Sample', datafile=r'files/'+ baseline_files[0])
     sample_BL = sample_BL.data
+    
     for animal in animals:
         if animal in baseline_files[0]:
             sample_BL['animal'] = [animal]*len(sample_BL)                #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -143,10 +144,12 @@ def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size, panel
         
         sample = FCMeasurement(ID='Test Sample', datafile=r'files/'+ file)
         sample = sample.data
+        
         for animal in animals:
             if animal in file:
                 sample['animal'] = [animal]*len(sample)
-        sample_BL.append(sample)
+        sample_BL = sample_BL.append(sample)
+        
         del sample
     
         
@@ -213,6 +216,7 @@ def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size, panel
                 if animal in item:
                     sample['animal'] = [animal]*len(sample)
             variables[key] = variables[key].append(sample)
+            
             del sample
                     
         #indexes = random.sample(range(0, len(variables[key])), cells)
@@ -740,11 +744,11 @@ try:
 
 
     UMAP_clusters(animals = ['CDF059','CDI003'],          # list of animal tags
-                            cells = 600_000,                           # Downsample size for each timepoint
+                            cells = 1_300_000,                           # Downsample size for each timepoint
                             neighbors = 10,                         # UMAP parameter
                             metric = 'euclidean',                   # UMAP parameter
-                            min_sample = 5,                        # HDBSCAN parameter
-                            min_size = 0.00020,                     # HDBSCAN parameter
+                            min_sample = 1,                        # HDBSCAN parameter
+                            min_size = 0.00033,                     # HDBSCAN parameter
                             panel = panel_,                         # declared above
                             channels_to_drop = channels_to_drop_,   # declared above
                             markers_to_drop = markers_to_drop_)     # declared above
