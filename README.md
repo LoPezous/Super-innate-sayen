@@ -46,7 +46,7 @@ Allows manual identification of cell populations
 
 ### Evolution of cluster sizes along timepoints
 
-![image](https://user-images.githubusercontent.com/66411147/137884285-32f91434-9e85-40d5-ac41-b4c94151f49d.png)
+![cluster_composition](https://user-images.githubusercontent.com/66411147/144067963-0e05b9b9-9e1b-4423-8095-184c2b8dec84.png)
 
 All timepoints were clustered together. Their sizes vary with timepoints. 
 
