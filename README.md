@@ -57,13 +57,48 @@ All timepoints were clustered together. Their sizes vary with timepoints.
 
 Such outputs are generated for each cluster
 
-### Marker quality control file 
 
-QC_list.txt 
+## Installation and usage
+### installation
+1. Download miniconda:   
+Windows 64-bit --> https://repo.anaconda.com/miniconda/Miniconda3-latest-Windows-x86_64.exe  
+Windows 32-bit --> https://repo.anaconda.com/miniconda/Miniconda3-latest-Windows-x86.exe
+2. Download this repository
+3. Install the dependencies:  
+In the miniconda prompt, type: **pip install -r *path*/requirements.txt**  
+(replace ***path*** by the path to the folder where you downloaded the repository)
+### usage
+1. Store your .fcs files in a folder named **files** inside the main folder
+2. The files' names must contain some tags:  
+BL for baseline timepoint  
+DXX for other timepoints (replace XX by the number of days)  
+The animal names 
+4. Modify the script:
+![image](https://user-images.githubusercontent.com/66411147/144062796-da6078d3-69cc-4d09-8869-6c12a55b0d6d.png)  
+  
+**channels_to_drop_**: The channels that do not correspond to any markers (e.g., beads)  
+  
+**panel_**: your marker panel /!\ MUST BE ORDERED AS IN THE FCS FILE  
+  
+**markers_to_drop_**: markers you do not wish to use for analysis
+  
+**animals**: the animal tags you provided in the filenames  
+  
+**cells**: the number of cells you wish to analyze per timepoint  
+  
+**neighbor**: UMAP parameter  
+  
+**metric**: UMAP parameter  
+  
+**min_sample**: HDBSCAN parameter  
+  
+**min_size**: HDBSCAN parameter  
 
-## NOTE
 
-control samples quality controls (***QC.py***) and clusters quality controls (inside ***Serial.py*** and ***Parallel.py***) are DIFFERENT. ***QC.py*** checks the validity of the markers while cluster quality control check the validity of the clustering
+
+
+
+
 
 
 
