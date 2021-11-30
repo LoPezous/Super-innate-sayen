@@ -70,7 +70,7 @@ In the miniconda prompt, type: **pip install -r *path*/requirements.txt**
 (replace ***path*** by the path to the folder where you downloaded the repository)
 ## usage
 1. Store your .fcs files in a folder named **files** inside the main folder
-2. The files' names must contain some tags:  
+2. The files' names must contain some tags seperated by underscores:  
 BL for baseline timepoint  
 DXX for other timepoints (replace XX by the number of days)  
 The animal tag  
