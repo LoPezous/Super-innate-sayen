@@ -31,8 +31,8 @@ def unimodal(dat):
         
         dat = list(dat)       
         dat = np.msort(dat)
-        intervals = UniDip(dat, alpha=0.05).run()
-        return intervals
+        intervals = UniDip(dat, alpha=0.05, ntrials=1).run()
+        return len(intervals)
     
 def spread(dat):
     IQR = stat.iqr(dat)
@@ -41,8 +41,8 @@ def spread(dat):
 good_markers = []
 bad_markers = []    
 sizes = []
-os.chdir(r'C:\Users\mp268043\Jupyter\tests\VAC2022\contrôles\files')
-for file_BL, file_D28 in zip(os.listdir(r'C:\Users\mp268043\Jupyter\tests\VAC2022\contrôles\files\BL'), os.listdir(r'C:\Users\mp268043\Jupyter\tests\VAC2022\contrôles\files\D28')) :
+os.chdir(r'C:\Users\mp268043\Desktop\QC\files')
+for file_BL, file_D28 in zip(os.listdir(r'C:\Users\mp268043\Desktop\QC\files\BL'), os.listdir(r'C:\Users\mp268043\Desktop\QC\files\D28')) :
     print('baseline: ' + file_BL + ' day 28: ' + file_D28)
     
     BL = FCMeasurement(ID='BL', datafile=r'BL/' + file_BL)
@@ -75,7 +75,7 @@ for file_BL, file_D28 in zip(os.listdir(r'C:\Users\mp268043\Jupyter\tests\VAC202
         print(' - '+ str(mbl))
 
     
-        if (unimodal(BL[str(mbl)]) == unimodal(BL[str(md28)])) & ((spread(BL[str(mbl)])<15*spread(D28[str(md28)])) & (spread(D28[str(mbl)]) < 15*spread(BL[str(md28)]))) & ((BL[str(mbl)].mean() < 15*D28[str(md28)].mean()) & (D28[str(md28)].mean() < 15*BL[str(mbl)].mean())):
+        if (unimodal(BL[str(mbl)]) == unimodal(BL[str(md28)])) & ((spread(BL[str(mbl)])<6*spread(D28[str(md28)])) & (spread(D28[str(mbl)]) < 6*spread(BL[str(md28)]))) & ((BL[str(mbl)].mean() < 6*D28[str(md28)].mean()) & (D28[str(md28)].mean() < 6*BL[str(mbl)].mean())):
             
             if mbl in bad_markers:
                 print('bad')
@@ -99,8 +99,20 @@ for file_BL, file_D28 in zip(os.listdir(r'C:\Users\mp268043\Jupyter\tests\VAC202
                 pass
             bad_markers.append(mbl)
             print('bad')
-                    
     
+    fig, axes = plt.subplots(6, 7, figsize=(17,18), dpi=100)    
+    for p, ax in zip(BL, axes.flatten()):
+        if p in bad_markers:
+            colors = ['red','red']
+        else:
+            colors = ['blue', 'green']
+        ax.hist(BL[str(p)], bins = 100, density = True, alpha = 0.6)
+        ax.hist(D28[str(p)], bins = 100, density = True, alpha = 0.6)
+        sns.kdeplot(BL[str(p)], ax = ax, legend = False, c = colors[0])  
+        sns.kdeplot(D28[str(p)], ax = ax, legend = False, c = colors[1])
+        #ax.set_title(str(p))
+    plt.savefig(str(file_BL)+ str(file_D28) +'_'+ r'distrib.png', dpi=300)
+    plt.close()
                 
 textfile = open("QC_results.txt", "w")
 textfile.write('GOOD:' + "\n")
@@ -118,9 +130,11 @@ textfile.write("N CELLS:")
 textfile.write("\n")
 textfile.write(str(sizes))
 textfile.write("\n")
-textfile.write("PARAMETERS:\means: 10 / spread: 10")   #CHANGE 
+textfile.write("PARAMETERS:\means: 3* / spread: 3*")   #CHANGE 
 textfile.close()
    
+fig, axes = plt.subplots(6, 7, figsize=(17,18), dpi=100)
+
 
 
 # In[63]:
