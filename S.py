@@ -6,11 +6,12 @@
 
 #!/usr/bin/env python
 # coding: utf-8
+
+#================================================================REQUIREMENTS===========================================================
 import FlowCytometryTools
 import numpy as np
 from sklearn.preprocessing import StandardScaler
 import matplotlib.pyplot as plt
-#import proplot as pplt
 import seaborn as sns
 import pandas as pd
 import os
@@ -18,10 +19,8 @@ import glob
 from FlowCytometryTools import FCMeasurement, ThresholdGate
 import random
 from sklearn.decomposition import PCA
-#import umap.umap_ as umap
 import umap.umap_ as umap
-import hdbscan
-    
+import hdbscan   
 from collections import Counter
 from matplotlib.pyplot import figure
 import matplotlib
@@ -41,6 +40,8 @@ import warnings
 import matplotlib.colors as colors
 warnings.filterwarnings("ignore")
 sys.setrecursionlimit(3000)
+
+#================================================================SUB FUNCTIONS=====================================================================
 class marks:
 
     good_mark = list()
@@ -49,7 +50,7 @@ class marks:
 
 def unimodal(array):
         
-    #dat = list(dat)       
+           
     array = np.msort(array)
     intervals = []
     for i in range(0,array.shape[1]):
@@ -73,34 +74,13 @@ def QC(colonnes, df):
     marks.bad_mark = [i for i in colonnes if i not in marks.good_mark]
                           
     
-
+#================================================================ MAIN FUNCTION ====================================================
 def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size, panel, channels_to_drop, markers_to_drop):
     
     
-   # Quality control tests used in QC section
+   
     
-
-    """
-    @numba.jit
-    def QC(columns, df_group):
-        
-        good_markers = [0]
-            
-        bad_markers = [0]
-        
-        slicer = int(0)
-        
-        for p in columns:
-            if (unimodal(df_group[:,slicer])) & (spread(df_group[:,slicer])):
-                
-                good_markers.append(p)
-            else:
-                
-                bad_markers.append(p)
-            slicer += int(1)
-            
-        return good_markers, bad_markers
-    """
+#================================================================ HANDLE DIRECTORIES =====================================================
     
     
     cwd = sys.path[0]
@@ -112,10 +92,12 @@ def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size, panel
     
     for path in paths:
                 
-        if os.path.exists(path):                                      #DELETES EXISTING DIRS AND RECREATE THEM
+        if os.path.exists(path):                                      
             shutil.rmtree(path)
         os.makedirs(path)
-        
+
+#================================================================ RECOVER DATA FROM BASELINE FILES ===========================================================================   
+
     print('step 1/5: Handling data...')
     #BASELINE
     files = os.listdir('files')
@@ -132,10 +114,10 @@ def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size, panel
     
     sample_BL = FCMeasurement(ID='Test Sample', datafile=r'files/'+ baseline_files[0])
     sample_BL = sample_BL.data
-    
+
     for animal in animals:
         if animal in baseline_files[0]:
-            sample_BL['animal'] = [animal]*len(sample_BL)                #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            sample_BL['animal'] = [animal]*len(sample_BL)                
     
     baseline_files.pop(0)
     
@@ -153,7 +135,7 @@ def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size, panel
         del sample
     
         
-    # Resampling BASELINE
+#=============================================================== RESAMPLE BASELINE DATA ======================================================================
     
     indexes = random.sample(range(0, len(sample_BL)), cells)
     data_BL = sample_BL
@@ -163,10 +145,10 @@ def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size, panel
     #Cleaning BASELINE
     data_BL = data_BL.drop(channels_to_drop, axis = 1)
     
-    data_BL['Timepoint'] = ['BL']*len(data_BL)            #ADD A TIMEPOINT COLUMN
+    data_BL['Timepoint'] = ['BL']*len(data_BL)            
     
     
-    
+#================================================================ RECOVER DATA FROM OTHER TIMEPOINT FILES ===========================================================================  
     # ALL D28 files
      
     matches = []
@@ -185,7 +167,7 @@ def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size, panel
     
     
     for file in files:
-        findall = re.findall('(D\d{2}_)', file)
+        findall = re.findall('(D\d{2,3}_)', file)
         if len(findall) == 1:
             matches.append(one(findall)) 
         
@@ -199,7 +181,7 @@ def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size, panel
                 timepoint_files.append(file)
                 
                 
-        #match = 'sample_' + str(match)
+        
         key = match
         value = FCMeasurement(ID='Test Sample', datafile=r'files/'+ timepoint_files[0])            #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         variables[key] = value.data
@@ -219,7 +201,7 @@ def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size, panel
             
             del sample
                     
-        #indexes = random.sample(range(0, len(variables[key])), cells)
+        
         indexes = random.sample(range(0, len(variables[key])), cells)
                 
                 
@@ -242,12 +224,12 @@ def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size, panel
                   #ADD A TIMEPOINT COLUMN
     
     
-    #ADD OTHER TIMEPOINT CODE IF NECESSARY HERE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    #SECTIONS TO COPY AND CHANGE: ALL {timepoint} files, Resampling {timepoint},  cleaning {timepoint}
+    
     
     #CREATE timepoint DF 
         timepoints = timepoints.append(variables[key]['Timepoint'], ignore_index = True)
         animales = animales.append(variables[key]['animal'], ignore_index = True)
+        
         del  variables[key]['Timepoint']
         del  variables[key]['animal']
         
@@ -286,7 +268,7 @@ def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size, panel
     
     print('step 2/5: Running UMAP...')
     
-    
+#================================================================ UMAP AND HDBSCAN ===========================================================================   
     #UMAP dimension reduction to 2D
     
     clusterable_embedding_1 = umap.UMAP(
@@ -300,12 +282,13 @@ def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size, panel
     print('step 3/5: Running HDBSCAN...                ')
     #HDBSCAN clustering over UMAP embedding
     
+
+    
     _01 = hdbscan.HDBSCAN(
         min_samples= min_sample,
         min_cluster_size= int(min_size*len(data)),
         core_dist_n_jobs=1
     ).fit_predict(clusterable_embedding_1)
-    
     
     
     
@@ -420,7 +403,34 @@ def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size, panel
                 plt.savefig(r'UMAP/highlight_' + str(cluster) + '_' + str(timepoint) + '.png', bbox_inches='tight', dpi=300)
                 plt.close()
 
-
+        #msi in each cluster for H3K27ac for each animal
+        for marker in ['Ki67','H3K4me3','H3K27me3','H3K27ac','H4K20me3']:
+            
+        
+            
+            for animal in np.unique(animales):
+            
+                for cluster in np.unique(labels_1):
+                    group = (labels_1 == cluster)
+            
+            
+                
+                    tmpt = (timepoints == 'BL')
+                    not_tmpt = (timepoints == 'D28')
+                    
+                    
+                    anml = (animales == animal)
+                    two = (tmpt & group & anml)
+                    not_two = (not_tmpt & group & anml)
+                    print(np.unique(two))
+                    df1 = pd.DataFrame(back_up[two][marker])
+                    #df1 = df1.dropna()
+                    df2 = pd.DataFrame(back_up[not_two][marker])
+                    #df2 = df2.dropna()
+                    df = pd.concat([df1, df2], axis=1, ignore_index = True)
+                    df.columns = ['BL','D28']
+                    df = df.astype('float64')
+                    df.to_csv(str(animal) + '_' + str(cluster) + '_' + str(marker) + '.csv', index = False)
         #UMAP markers
 
         path = r'UMAP/other_markers'
@@ -432,51 +442,53 @@ def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size, panel
         t = 1
         u = 0
         for x in back_up:
+            for timepoint in np.unique(timepoints):
+                tmp = (timepoints == timepoint)
             
-            print(str(int(t/len(back_up.columns)*100)) + ' %' + '|' + '█'*t + ' '*(len(back_up.columns)-u) + '|          ', end = '\r')
-            t+=1
-            u+=1
-                
-            fig, ax = plt.subplots(figsize = (12,12))
-                
-            #for cluster in np.unique(labels_1):
+                print(str(int(t/len(back_up.columns)*100)) + ' %' + '|' + '█'*t + ' '*(len(back_up.columns)-u) + '|          ', end = '\r')
+                t+=1
+                u+=1
                     
+                fig, ax = plt.subplots(figsize = (12,12))
+                    
+                #for cluster in np.unique(labels_1):
+                        
 
-            #clustered = (labels_1 == cluster)
+                #clustered = (labels_1 == cluster)
+                    
+                bounds = np.array([back_up[str(x)].min(), 
+                                  back_up[str(x)].quantile(.05)+0.01, 
+                                  back_up[str(x)].quantile(.35)+0.011,
+                                  back_up[str(x)].quantile(.65)+0.0111, 
+                                  back_up[str(x)].quantile(.95)+0.01111, 
+                                  back_up[str(x)].max()])
                 
-            bounds = np.array([back_up[str(x)].min(), 
-                              back_up[str(x)].quantile(.05)+0.01, 
-                              back_up[str(x)].quantile(.35)+0.011,
-                              back_up[str(x)].quantile(.65)+0.0111, 
-                              back_up[str(x)].quantile(.95)+0.01111, 
-                              back_up[str(x)].max()])
-            
-            ticks = np.array([back_up[str(x)].min(), 
-                              back_up[str(x)].quantile(.05), 
-                              back_up[str(x)].quantile(.35),
-                              back_up[str(x)].quantile(.65), 
-                              back_up[str(x)].quantile(.95), 
-                              back_up[str(x)].max()])
-            #bounds = np.linspace(1,5,10,100)
-            #norm = pplt.DiscreteNorm(bounds, norm=None, unique=None, step=None, clip=True)   
-            norm = colors.BoundaryNorm(boundaries=bounds, ncolors=256)
+                ticks = np.array([back_up[str(x)].min(), 
+                                  back_up[str(x)].quantile(.05), 
+                                  back_up[str(x)].quantile(.35),
+                                  back_up[str(x)].quantile(.65), 
+                                  back_up[str(x)].quantile(.95), 
+                                  back_up[str(x)].max()])
+                #bounds = np.linspace(1,5,10,100)
+                #norm = pplt.DiscreteNorm(bounds, norm=None, unique=None, step=None, clip=True)   
+                norm = colors.BoundaryNorm(boundaries=bounds, ncolors=256)
 
-            plt.scatter(clusterable_embedding_1[:,0],
-                        clusterable_embedding_1[:,1],
-                        s=0.1,
-                        c = back_up[str(x)],
-                        cmap='jet', norm= norm)
-            #plt.clim(1,1000)
-            #plt.clim(vmin = 0.1, vmax = back_up[clustered][str(x)].max())
-            
-            
-            cb = plt.colorbar()
-            cb.set_ticklabels(ticks)
+                plt.scatter(clusterable_embedding_1[tmp][:,0],
+                            clusterable_embedding_1[tmp][:,1],
+                            s=0.1,
+                            c = back_up[tmp][str(x)],
+                            cmap='jet', norm= norm)
+                #plt.clim(1,1000)
+                #plt.clim(vmin = 0.1, vmax = back_up[clustered][str(x)].max())
                 
                 
-                
-            plt.savefig(r'UMAP/other_markers/_' + str(x) + '.png', dpi=300)
-            plt.close()
+                cb = plt.colorbar()
+                cb.set_ticklabels(ticks)
+                    
+                    
+                    
+                plt.savefig(r'UMAP/other_markers/_' + str(x) + '_' + str(timepoint) +'.png', dpi=300)
+                plt.close()
 
 
 
@@ -661,13 +673,7 @@ def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size, panel
                     clustersizes_D28.append(0)
                     
                     
-            """
-            match = match.replace('_','')
-            clustersizes_D28 = pd.series(clustersizes_D28)
-            clustersizes_D28.set_axis([match], axis=1, inplace=True)
-            cluster_sizes = pd.concat([cluster_sizes, clustersizes_D28], axis = 1)
-            cluster_sizes = cluster_sizes.fillna(0)
-            """
+            
             
             match = match.replace('_','')
             clustersizes_D28 = pd.Series(clustersizes_D28)
@@ -680,18 +686,21 @@ def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size, panel
             #cluster_sizes[match] = clustersizes_D28 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         
         #plotting
-        
+        colo = ['green', 'yellow', 'red', 'black']
+        cluster_sizes.to_csv(r'Clusters/diff_abundance.csv', index = False)
+         
         figure(figsize=(15, 10))
         width = 0.3
-        plt.bar(cluster_sizes['clusters'], cluster_sizes['BL'],width, color = 'b', alpha = 0.6, label = 'Baseline', log = True)
-        tmp_colors = ['g','r','purple','yellow','black']
-        iterador = 0
-        largeur = 1
+        plt.bar(cluster_sizes['clusters'], cluster_sizes['BL'],width, color = 'b', alpha = 0.7, label = 'Baseline')
+        
+        f = 1
+        c = 0
         for match in matches:
             match = match.replace('_','')
-            plt.bar(cluster_sizes['clusters']+width*largeur, cluster_sizes[str(match)],width, color = tmp_colors[iterador], alpha = 0.6, label = str(match))
-            iterador +=1
-            largeur += 1
+            plt.bar(cluster_sizes['clusters']+(width*f), cluster_sizes[str(match)],width, color = colo[c], alpha = 0.7, label = str(match))
+            f = f+1
+            c= c+1
+            
         #plt.yscale("log")
 
 
@@ -701,11 +710,12 @@ def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size, panel
         plt.xlabel('Clusters', fontsize = 15)
         plt.ylabel('Cell count', fontsize = 15)
         plt.title('Evolution of cluster sizes', fontsize = 18)
-
+        
         
         plt.savefig(r'Clusters/cluster_composition.png', dpi=300)
         plt.close()
         print('\nanalysis completed')
+
         
 
 
@@ -750,9 +760,9 @@ try:
 
     UMAP_clusters(animals = ['CDF059','CDI003'],          # list of animal tags
                             cells = 500,                           # Downsample size for each timepoint
-                            neighbors = 10,                         # UMAP parameter
+                            neighbors = 15,                         # UMAP parameter
                             metric = 'euclidean',                   # UMAP parameter
-                            min_sample = 20,                        # HDBSCAN parameter
+                            min_sample = 1,                        # HDBSCAN parameter
                             min_size = 0.033,                     # HDBSCAN parameter
                             panel = panel_,                         # declared above
                             channels_to_drop = channels_to_drop_,   # declared above
