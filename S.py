@@ -1,13 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[ ]:
-
-
-#!/usr/bin/env python
-# coding: utf-8
-
-#================================================================REQUIREMENTS===========================================================
+#================================================================IMPORTS===========================================================
 import FlowCytometryTools
 import numpy as np
 from sklearn.preprocessing import StandardScaler
@@ -41,7 +35,7 @@ import matplotlib.colors as colors
 warnings.filterwarnings("ignore")
 sys.setrecursionlimit(3000)
 
-#================================================================SUB FUNCTIONS=====================================================================
+#================================================================FUNCTIONS=====================================================================
 class marks:
 
     good_mark = list()
@@ -183,7 +177,7 @@ def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size, panel
                 
         
         key = match
-        value = FCMeasurement(ID='Test Sample', datafile=r'files/'+ timepoint_files[0])            #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        value = FCMeasurement(ID='Test Sample', datafile=r'files/'+ timepoint_files[0])            
         variables[key] = value.data
         for animal in animals:
             if animal in timepoint_files[0]:
@@ -234,7 +228,7 @@ def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size, panel
         del  variables[key]['animal']
         
     
-    #DELETE TIMEPOINTS FROM ANALYSIS DF (if other timepoints were added, also delete timepoint column from these dataframes)
+    
     
     
     
@@ -263,7 +257,7 @@ def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size, panel
     data = np.arcsinh(data)
     print(len(data), 'cells')
     #data = (data-data.min())/(data.max()-data.min()) #MINMAX NORMED
-                             #FLOAT 323 !!!
+                             
     #WHOLE DATA ANALYSIS
     
     print('step 2/5: Running UMAP...')
@@ -315,7 +309,7 @@ def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size, panel
         for timepoint in np.unique(timepoints):
             
             
-            color = iter(cm.hsv(np.linspace(0, 1, len(np.unique(labels_1)*2)))) #choosing gradient as discrete colors depending on number of clusters
+            color = iter(cm.hsv(np.linspace(0, 1, len(np.unique(labels_1)*2)))) 
 
             
             fig, ax = plt.subplots(figsize = (15,15))
