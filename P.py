@@ -38,7 +38,7 @@ import datetime
 import time
 import warnings
 import matplotlib.colors as colors
-warnings.filterwarnings("ignore")
+
 
 class marks:
 
@@ -126,7 +126,7 @@ def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size, panel
         
                 
     
-    sample_BL = FCMeasurement(ID='Test Sample', datafile=r'files/'+ baseline_files[0])
+    sample_BL = FCMeasurement(ID='Sample', datafile=r'files/'+ baseline_files[0])
     sample_BL = sample_BL.data
     for animal in animals:
         if animal in baseline_files[0]:
@@ -137,7 +137,7 @@ def UMAP_clusters(animals, cells, neighbors, metric, min_sample, min_size, panel
     
     for file in baseline_files:
         
-        sample = FCMeasurement(ID='Test Sample', datafile=r'files/'+ file)
+        sample = FCMeasurement(ID='Sample', datafile=r'files/'+ file)
         sample = sample.data
         for animal in animals:
             if animal in file:
